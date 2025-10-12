@@ -1,0 +1,31 @@
+{
+  "dashboard": {
+    "app_title": "แอปแดชบอร์ด",
+    "users": {
+      "title": "ผู้ใช้",
+      "description": "จัดการผู้ใช้ของคุณ",
+      "role_admin": "ผู้ดูแลระบบ",
+      "role_user": "ผู้ใช้",
+      "role_guest": "ผู้เยี่ยมชม",
+      "table": {
+        "id": "ไอดี",
+        "fullName": "ชื่อ",
+        "email": "อีเมล",
+        "role": "สิทธิ์",
+        "avatar": "รูปภาพ"
+      }
+    },
+    "user": {
+      "change_password_title": "เปลี่ยนรหัสผ่าน",
+      "form": {
+        "change_password_success": "เปลี่ยนรหัสผ่านสำเร็จ",
+        "password_required": "โปรดระบุรหัสผ่าน",
+        "change_password_label": "รหัสผ่าน",
+        "change_password_placeholder": "รหัสผ่านใหม่",
+        "change_password_button": "เปลี่ยนรหัสผ่าน"
+      }
+    },
+    "title": "แดชบอร์ด",
+    "description": "ยินดีต้อนรับเข้าสู่แดชบอร์ดของคุณ!"
+  }
+}

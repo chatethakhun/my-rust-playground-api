@@ -1,0 +1,20 @@
+{
+  "part": {
+    "title": "Kit part",
+    "form": {
+      "subassembly_label": "Subassembly",
+      "subassembly_ph": "Subassembly",
+      "subassembly_error": "Please enter the subassembly",
+      "runner_title": "Runners",
+      "runner_label": "Runners",
+      "runner_ph": "Please enter the runners",
+      "runner_error": "Please enter the runners",
+      "gate_label": "Gate",
+      "gate_ph": "Press Enter to add the gate",
+      "gate_error": "Please add the gate. Press Enter to add the gate",
+      "add_part": "+ Add part",
+      "submit": "Submit",
+      "cancel": "Cancel"
+    }
+  }
+}

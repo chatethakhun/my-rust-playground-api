@@ -1,0 +1,12 @@
+{
+  "subassembly": {
+    "title": "ส่วนประกอบ",
+    "form": {
+      "name_label": "ชื่อ",
+      "name_ph": "ชื่อ",
+      "name_error": "กรุณาใส่ชื่อ",
+      "submit": "Submit",
+      "cancel": "Cancel"
+    }
+  }
+}

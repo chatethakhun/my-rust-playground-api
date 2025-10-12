@@ -1,0 +1,13 @@
+{
+  "title": "Login",
+  "dont_have_acc": "Don't have an account?",
+  "sign_up": "Sign up",
+  "form": {
+    "email_ph": "Email",
+    "email_require": "Email is required",
+    "password_ph": "Password",
+    "password_require": "Password is required",
+    "submit": "Login",
+    "loading": "Loading..."
+  }
+}

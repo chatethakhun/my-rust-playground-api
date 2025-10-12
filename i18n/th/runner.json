@@ -1,0 +1,24 @@
+{
+  "runner": {
+    "title": "แผงรันเนอร์",
+    "qty": "จำนวน",
+    "already_cut": "ตัดแล้ว",
+    "is_not_cut": "ยังไม่ตัด",
+    "form": {
+      "code_label": "ชื่อแผงรันเนอร์",
+      "code_ph": "ตัวอย่าง Head, Hand",
+      "code_error": "กรุณาใส่ชื่อแผงรันเนอร์",
+      "runner_label": "สีรันเนอร์",
+      "runner_ph": "สีรันเนอร์",
+      "runner_error": "กรุณาใส่ชื่อรันเนอร์",
+      "qty_label": "จำนวน",
+      "qty_ph": "กรุณาใส่จำนวน",
+      "qty_error": "กรุณาใส่จำนวน",
+      "color_label": "สี",
+      "color_ph": "เลือกสี",
+      "color_error": "กรุณาใส่สี",
+      "submit": "Submit",
+      "cancel": "Cancel"
+    }
+  }
+}

@@ -14,10 +14,10 @@ use dotenvy;
 use mongodb::Client;
 use tokio::net::TcpListener; // 👈 ต้องนำเข้า TcpListener ด้วย
 
+use crate::api::i18n::serve_i18n_file;
 use crate::model::user::Message;
 use crate::state::AppState; // นำเข้า Message สำหรับ Health Check
-
-// Handler สำหรับ Health Check (สามารถย้ายไป api/health.rs ได้)
+                            // Handler สำหรับ Health Check (สามารถย้ายไป api/health.rs ได้)
 async fn mongo_health_check(State(_state): State<AppState>) -> Json<Message> {
     // ... โค้ด Health Check
     Json(Message {
@@ -53,6 +53,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/", get(|| async { "Axum API Running" }))
         // 🚀 รวม Routes จากโมดูลอื่น
         .route("/health/mongo", get(mongo_health_check))
+        .route("/i18n/:lng/:ns", get(serve_i18n_file))
         .nest(
             "/v2/api",
             Router::new()

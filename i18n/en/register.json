@@ -1,0 +1,17 @@
+{
+  "title": "Register",
+  "form": {
+    "email_ph": "Email",
+    "name_ph": "Name",
+    "email_require": "Email is required",
+    "name_require": "Name is required",
+    "password_ph": "Password",
+    "password_require": "Password is required",
+    "c_password_ph": "Confirm Password",
+    "c_password_require": "Confirm Password is required",
+    "save": "Register",
+    "saving": "Saving...",
+    "already_acc": "Already have an account?",
+    "to_login": "Login"
+  }
+}

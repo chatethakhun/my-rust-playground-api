@@ -1,0 +1,31 @@
+{
+  "dashboard": {
+    "app_title": "Dashboard",
+    "users": {
+      "title": "Users",
+      "description": "Manage your users",
+      "role_admin": "Admin",
+      "role_user": "User",
+      "role_guest": "Guest",
+      "table": {
+        "id": "ID",
+        "fullName": "Full Name",
+        "email": "Email",
+        "role": "Role",
+        "avatar": "Avatar"
+      },
+      "user": {
+        "change_password_title": "Change Password",
+        "form": {
+          "change_password_success": "Password changed successfully",
+          "password_required": "Password is required",
+          "change_password_label": "Password",
+          "change_password_placeholder": "New Password",
+          "change_password_button": "Change Password"
+        }
+      }
+    },
+    "title": "Dashboard",
+    "description": "Welcome to your dashboard!"
+  }
+}

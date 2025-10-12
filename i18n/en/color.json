@@ -1,0 +1,19 @@
+{
+  "color": {
+    "clear-color": "Clear",
+    "form": {
+      "name_label": "Name",
+      "name_ph": "Name",
+      "name_error": "Please enter the name",
+      "multiple_label": "Multiple colors",
+      "clear_color_label": "Clear color",
+      "value": "Value",
+      "color_label": "Color",
+      "color_ph": "color",
+      "color_error": "Please enter the color",
+      "submit": "Submit",
+      "cancel": "Cancel",
+      "error": "Name already exists or invalid color. Please try again."
+    }
+  }
+}

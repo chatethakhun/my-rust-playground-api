@@ -1,0 +1,24 @@
+{
+  "runner": {
+    "title": "Runners",
+    "qty": "Quantity",
+    "already_cut": "Already cut",
+    "is_not_cut": "Not cut",
+    "form": {
+      "code_label": "Code",
+      "code_ph": "Please enter the code",
+      "code_error": "Please enter the code",
+      "runner_label": "Name",
+      "runner_ph": "etc A1, A2",
+      "runner_error": "Please enter the name",
+      "qty_label": "Quantity",
+      "qty_ph": "etc. 1, 2",
+      "qty_error": "Please enter the quantity",
+      "submit": "Submit",
+      "color_label": "Color",
+      "color_ph": "etc. Red, Blue",
+      "color_error": "Please enter the color",
+      "cancel": "Cancel"
+    }
+  }
+}

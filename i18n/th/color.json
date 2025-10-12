@@ -1,0 +1,19 @@
+{
+  "color": {
+    "clear-color": "ใส",
+    "form": {
+      "name_label": "ชื่อ",
+      "name_ph": "ชื่อ",
+      "name_error": "กรุณาใส่ชื่อ",
+      "multiple_label": "หลายสี",
+      "clear_color_label": "สีโปร่งใส",
+      "value": "ค่า",
+      "color_label": "สี",
+      "color_ph": "สี",
+      "color_error": "กรุณาใส่สี",
+      "submit": "ส่ง",
+      "cancel": "ยกเลิก",
+      "error": "ชื่อซ้ำกันหรือสีไม่ถูกต้อง กรุณาลองใหม่"
+    }
+  }
+}

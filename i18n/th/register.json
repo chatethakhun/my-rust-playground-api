@@ -1,0 +1,17 @@
+{
+  "title": "สมัครสมาชิก",
+  "form": {
+    "email_ph": "อีเมล",
+    "email_require": "อีเมลจำเป็น",
+    "name_ph": "ชื่อ",
+    "name_require": "ชื่อจำเป็น",
+    "password_ph": "รหัสผ่าน",
+    "password_require": "รหัสผ่านจำเป็น",
+    "c_password_ph": "ยืนยันรหัสผ่าน",
+    "c_password_require": "ยืนยันรหัสผ่านจำเป็น",
+    "save": "สมัครสมาชิก",
+    "saving": "กำลังสมัครสมาชิก...",
+    "already_acc": "มีบัญชีอยู่แล้ว?",
+    "to_login": "เข้าสู่ระบบ"
+  }
+}

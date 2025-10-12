@@ -1,0 +1,20 @@
+{
+  "part": {
+    "title": "ส่วนประกอบกันพลา",
+    "form": {
+      "subassembly_label": "ส่วนประกอบ",
+      "subassembly_ph": "เลือกส่วนประกอบ",
+      "subassembly_error": "กรุณาใส่ส่วนประกอบ",
+      "runner_title": "แผงรันเนอร์",
+      "runner_label": "เลแผงรันเนอร์",
+      "runner_ph": "เลือกใส่แผงรันเนอร์",
+      "runner_error": "กรุณาใส่แผงรันเนอร์",
+      "gate_label": "เลขเกท",
+      "gate_ph": "กด Enter เพื่อเพิ่มเลขเกท",
+      "gate_error": "กรุณาเพิ่มเลขเกท กด Enter เพื่อเพิ่มเลขเกท",
+      "add_part": "+ แผงรันเนอร์",
+      "submit": "Submit",
+      "cancel": "Cancel"
+    }
+  }
+}

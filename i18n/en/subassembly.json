@@ -1,0 +1,12 @@
+{
+  "subassembly": {
+    "title": "Kit subassembly",
+    "form": {
+      "name_label": "Name",
+      "name_ph": "etc. Head, Hand",
+      "name_error": "Please enter the name",
+      "submit": "Submit",
+      "cancel": "Cancel"
+    }
+  }
+}
