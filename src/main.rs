@@ -1,83 +1,62 @@
-use axum::{extract::State, routing::get, Json, Router};
+// src/main.rs
+
+// บอก Rust ให้รู้จักโมดูลที่เราแยกไว้
+mod api;
+mod model;
+mod repository;
+mod state;
+
+use axum::extract::State;
+use axum::Json;
+use axum::{routing::get, Router};
 use dotenvy;
-use mongodb::Client; // สำหรับสร้าง MongoDB Client
-use serde::Serialize; // สำหรับโหลดค่าจาก .env
+use mongodb::Client;
 
-// Struct สำหรับ Response ทั่วไป
-#[derive(Debug, Serialize, Clone)]
-struct Message {
-    message: String,
+use crate::model::user::Message;
+use crate::state::AppState; // นำเข้า Message สำหรับ Health Check
+
+// Handler สำหรับ Health Check (สามารถย้ายไป api/health.rs ได้)
+async fn mongo_health_check(State(_state): State<AppState>) -> Json<Message> {
+    // ... โค้ด Health Check
+    Json(Message {
+        message: "Health Check OK".to_string(),
+    })
 }
-
-// Struct สำหรับ Application State ที่เก็บ MongoDB Client
-#[derive(Clone)]
-struct AppState {
-    mongo_client: Client, // MongoDB Client
-}
-
-// ----------------------------------------------------
-// HANDLERS
-// ----------------------------------------------------
-
-// Handler 1: Hello World
-async fn root() -> Json<Message> {
-    let response = Message {
-        message: "Hello, World!".to_string(),
-    };
-    Json(response)
-}
-
-// Handler 2: ตรวจสอบสถานะการเชื่อมต่อ MongoDB
-async fn mongo_health_check(
-    State(state): State<AppState>, // ดึง AppState ออกมา
-) -> Json<Message> {
-    // ลองเชื่อมต่อกับ Admin Database เพื่อตรวจสอบสถานะ
-    match state.mongo_client.list_database_names(None, None).await {
-        Ok(_) => Json(Message {
-            message: "MongoDB Atlas Connection: OK".to_string(),
-        }),
-        Err(e) => {
-            eprintln!("MongoDB Health Check Failed: {}", e);
-            // ตอบกลับด้วยสถานะ error
-            Json(Message {
-                message: format!("MongoDB Atlas Connection FAILED: {}", e),
-            })
-        }
-    }
-}
-
-// ----------------------------------------------------
-// MAIN FUNCTION
-// ----------------------------------------------------
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // 0. โหลด Environment Variables
     dotenvy::dotenv().ok();
 
-    // 1. สร้าง MongoDB Client
-    let database_url = std::env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set in .env file (mongodb+srv://...)");
+    // 1. Setup State (Client DB Name)
+    let database_url =
+        std::env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env file");
+    let db_name = std::env::var("MONGO_DATABASE_NAME").unwrap_or_else(|_| "auth_db".to_string());
 
-    // 🚀 แก้ไขแล้ว: ใช้ with_uri_str และ await อย่างถูกต้อง
+    // สร้าง MongoDB Client (ต้องใช้ .await?)
     let client = Client::with_uri_str(&database_url).await?;
 
-    // 2. สร้าง Application State
+    // 2. สร้าง AppState struct (ตัวแปรที่หายไป)
     let app_state = AppState {
         mongo_client: client,
+        db_name,
     };
 
-    // 3. กำหนด Router และฝัง State
-    let app = Router::new()
-        .route("/", get(root))
+    // 1. Setup State (Client, DB_Name)
+    // ... (โค้ดการสร้าง client และ AppState)
+
+    // 2. กำหนด Router
+    let app: Router = Router::new()
+        .route("/", get(|| async { "Axum API Running" }))
+        // 🚀 รวม Routes จากโมดูลอื่น
+        .nest("/auth", api::auth::auth_router()) // เรียกใช้ router จาก auth.rs
         .route("/health/mongo", get(mongo_health_check))
-        .with_state(app_state); // ส่ง AppState เข้าไป
+        .with_state(app_state);
 
+    // 3. รัน Server
+    // ... (โค้ดการรัน server)
+    //
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await?;
-
     println!("🚀 Server running on http://127.0.0.1:3000");
-    println!("   - Base: http://127.0.0.1:3000/");
-    println!("   - Health Check: http://127.0.0.1:3000/health/mongo");
 
     axum::serve(listener, app).await?;
 
