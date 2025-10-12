@@ -6,18 +6,20 @@ mod middleware;
 mod model;
 mod repository;
 mod state;
-
+use crate::api::i18n::serve_i18n_file;
+use crate::model::user::Message;
+use crate::state::AppState;
 use axum::extract::State;
+use axum::http::{self, header};
 use axum::Json;
 use axum::{routing::get, Router};
 use dotenvy;
 use mongodb::Client;
-use tokio::net::TcpListener; // 👈 ต้องนำเข้า TcpListener ด้วย
-
-use crate::api::i18n::serve_i18n_file;
-use crate::model::user::Message;
-use crate::state::AppState; // นำเข้า Message สำหรับ Health Check
-                            // Handler สำหรับ Health Check (สามารถย้ายไป api/health.rs ได้)
+use std::time::Duration; // Optional: for max_age
+use tokio::net::TcpListener;
+use tower_http::cors::AllowOrigin; // 👈 For flexible origin control
+use tower_http::cors::CorsLayer; // 👈 Import CorsLayer // 👈 ต้องนำเข้า TcpListener ด้วย // นำเข้า Message สำหรับ Health Check
+                                 // Handler สำหรับ Health Check (สามารถย้ายไป api/health.rs ได้)
 async fn mongo_health_check(State(_state): State<AppState>) -> Json<Message> {
     // ... โค้ด Health Check
     Json(Message {
@@ -28,7 +30,24 @@ async fn mongo_health_check(State(_state): State<AppState>) -> Json<Message> {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenvy::dotenv().ok();
-
+    // 🚀 1. Configure the CORS policy
+    let cors = CorsLayer::new()
+        .allow_origin(AllowOrigin::list([
+            "http://localhost:3000".parse().unwrap(),
+            "https://playground-fe-xi.vercel.app".parse().unwrap(),
+        ]))
+        // 🚨 Set allowed HTTP methods (GET, POST, PUT, DELETE, OPTIONS, etc.)
+        .allow_methods([http::Method::GET, http::Method::POST, http::Method::OPTIONS])
+        // 🚨 Set allowed headers (Content-Type, Authorization, etc.)
+        .allow_headers(vec![
+            header::AUTHORIZATION,
+            header::CONTENT_TYPE,
+            header::ACCEPT,
+        ])
+        // อนุญาตให้ Credentials (Cookies, Auth Headers) ถูกส่งข้าม Domain
+        .allow_credentials(true)
+        // กำหนดระยะเวลาที่ Browser ควร Cache CORS policy (optional)
+        .max_age(Duration::from_secs(60 * 60));
     // 1. Setup State (Client DB Name)
     let database_url =
         std::env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env file");
@@ -60,6 +79,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .nest("/auth", api::auth::auth_router()) // URL: /v2/api/auth/...
                 .nest("/kits", api::kit::kit_router()), // URL: /v2/api/kits/...
         )
+        .layer(cors)
         .with_state(app_state.clone());
 
     // 3. รัน Server
