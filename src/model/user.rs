@@ -29,3 +29,9 @@ pub struct LoginPayload {
 pub struct Message {
     pub message: String,
 }
+
+#[derive(Debug, Serialize)]
+pub struct AuthResponse {
+    pub message: String,
+    pub token: String, // 👈 ส่ง JWT Token กลับไป
+}

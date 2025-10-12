@@ -12,6 +12,12 @@ tokio = { version = "1.37", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 argon2 = "0.5" # สำหรับการ Hash รหัสผ่านอย่างปลอดภัย
+# You will have to select either `aws_lc_rs` or `rust_crypto` as backend if you're not using your own
+jsonwebtoken = { version = "10", features = ["aws_lc_rs"] }
+# If you do not need pem decoding, you can disable the default feature `use_pem` that way:
+# jsonwebtoken = {version = "10", default-features = false, features = ["aws_lc_rs"] }
+
+chrono = { version = "0.4", features = ["serde"] } # สำหรับการจัดการเวลาใน JWT Payload
 # 🚀 MongoDB Official Driver
 mongodb = "2.8"
 

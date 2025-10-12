@@ -6,4 +6,5 @@ use mongodb::Client;
 pub struct AppState {
     pub mongo_client: Client,
     pub db_name: String,
+    pub jwt_secret: String,
 }

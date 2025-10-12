@@ -11,6 +11,7 @@ use axum::Json;
 use axum::{routing::get, Router};
 use dotenvy;
 use mongodb::Client;
+use tokio::net::TcpListener; // 👈 ต้องนำเข้า TcpListener ด้วย
 
 use crate::model::user::Message;
 use crate::state::AppState; // นำเข้า Message สำหรับ Health Check
@@ -31,14 +32,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let database_url =
         std::env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env file");
     let db_name = std::env::var("MONGO_DATABASE_NAME").unwrap_or_else(|_| "auth_db".to_string());
+    // 🚀 ส่วนที่แก้ไข: การดึงค่า PORT
 
     // สร้าง MongoDB Client (ต้องใช้ .await?)
     let client = Client::with_uri_str(&database_url).await?;
-
+    let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set in .env file");
     // 2. สร้าง AppState struct (ตัวแปรที่หายไป)
     let app_state = AppState {
         mongo_client: client,
         db_name,
+        jwt_secret,
     };
 
     // 1. Setup State (Client, DB_Name)
@@ -55,8 +58,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 3. รัน Server
     // ... (โค้ดการรัน server)
     //
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await?;
-    println!("🚀 Server running on http://127.0.0.1:3000");
+    let port: u16 = std::env::var("PORT")
+        // พยายามแปลงค่าจาก String เป็น u16
+        .unwrap_or_else(|_| "3000".to_string()) // หากไม่พบ PORT ใน env ให้ใช้ "3000" เป็นค่าเริ่มต้น
+        .parse()
+        .expect("PORT must be a valid number (u16)"); // หากแปลงไม่ได้ (ไม่ใช่ตัวเลข) ให้ panic
+
+    // 💡 Bind Address: ใช้ "0.0.0.0" เพื่อรับฟังทุก Network Interface
+    let addr = format!("0.0.0.0:{}", port);
+
+    // 1. กำหนด Address และ Port ที่ต้องการ Bind
+    let listener = TcpListener::bind(&addr)
+        .await
+        .expect(&format!("Failed to bind TCP listener to {}", addr));
+
+    println!("Listening on http://{}", addr);
 
     axum::serve(listener, app).await?;
 

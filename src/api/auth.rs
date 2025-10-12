@@ -1,8 +1,11 @@
-use crate::model::user::{LoginPayload, Message, User};
+
+use crate::model::jwt::Claims;
+use crate::model::user::{AuthResponse, LoginPayload, Message, User};
 use crate::repository::user::create_user;
 use crate::repository::user::find_by_username;
 use crate::state::AppState;
 use argon2::PasswordVerifier;
+use jsonwebtoken::{encode, EncodingKey, Header};
 // นำเข้า AppState
 use axum::{extract::State, http::StatusCode, routing::post, Json, Router}; // 👈 นำเข้า Repository Function
                                                                            // สำหรับ Hashing
@@ -15,13 +18,14 @@ use argon2::{
     },
     Argon2,
 };
+
 use mongodb::Database; // ... (นำเข้า argon2 และ mongodb ที่จำเป็น)
 
 // Handler Login (ยกโค้ดจาก main.rs มาที่นี่)
 pub async fn login_handler(
     State(state): State<AppState>,
     Json(payload): Json<LoginPayload>,
-) -> Result<(StatusCode, Json<Message>), StatusCode> {
+) -> Result<(StatusCode, Json<AuthResponse>), StatusCode> {
     // ... โค้ด Login Logic ...
     let db = state.mongo_client.database(&state.db_name);
 
@@ -45,9 +49,19 @@ pub async fn login_handler(
 
     if is_valid {
         // Login สำเร็จ
+        let claims = Claims::new(user.username.clone(), 24);
+
+        // 🚀 2. สร้าง JWT Token
+        let token = encode(
+            &Header::new(jsonwebtoken::Algorithm::HS256), // ใช้ HS256 เป็น Algorithm มาตรฐาน
+            &claims,
+            &EncodingKey::from_secret(state.jwt_secret.as_ref()),
+        )
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
         Ok((
             StatusCode::OK,
-            Json(Message {
+            Json(AuthResponse {
+                token,
                 message: format!("Login successful for user: {}", user.username),
             }),
         ))
