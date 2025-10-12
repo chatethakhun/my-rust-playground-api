@@ -1,7 +1,7 @@
 use crate::model::user::{LoginPayload, Message, User};
 use crate::repository::user::create_user;
 use crate::repository::user::find_by_username;
-use crate::state::{self, AppState};
+use crate::state::AppState;
 use argon2::PasswordVerifier;
 // นำเข้า AppState
 use axum::{extract::State, http::StatusCode, routing::post, Json, Router}; // 👈 นำเข้า Repository Function
