@@ -2,6 +2,7 @@
 
 // บอก Rust ให้รู้จักโมดูลที่เราแยกไว้
 mod api;
+mod middleware;
 mod model;
 mod repository;
 mod state;
@@ -51,9 +52,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app: Router = Router::new()
         .route("/", get(|| async { "Axum API Running" }))
         // 🚀 รวม Routes จากโมดูลอื่น
-        .nest("/auth", api::auth::auth_router()) // เรียกใช้ router จาก auth.rs
         .route("/health/mongo", get(mongo_health_check))
-        .with_state(app_state);
+        .nest(
+            "/v2/api",
+            Router::new()
+                .nest("/auth", api::auth::auth_router()) // URL: /v2/api/auth/...
+                .nest("/kits", api::kit::kit_router()), // URL: /v2/api/kits/...
+        )
+        .with_state(app_state.clone());
 
     // 3. รัน Server
     // ... (โค้ดการรัน server)

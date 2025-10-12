@@ -1,8 +1,7 @@
-
 use crate::model::jwt::Claims;
 use crate::model::user::{AuthResponse, LoginPayload, Message, User};
-use crate::repository::user::create_user;
-use crate::repository::user::find_by_username;
+use crate::repository::user::{create_user, find_by_username};
+
 use crate::state::AppState;
 use argon2::PasswordVerifier;
 use jsonwebtoken::{encode, EncodingKey, Header};

@@ -4,7 +4,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize}; // นำเข้า Utc
 
 // Payload ที่จะใส่ใน JWT Token
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
     pub sub: String, // Subject (โดยทั่วไปคือ User ID หรือ Username)
     pub exp: i64,    // Expiration time (เวลาหมดอายุ)

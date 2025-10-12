@@ -23,7 +23,7 @@ mongodb = "2.8"
 
 # ⚡️ Utility สำหรับ Async/Await
 futures-util = "0.3"
-
+async-trait = "0.1" # 👈 เพิ่มบรรทัดนี้
 # Environment Variables
 dotenvy = "0.15"
 
