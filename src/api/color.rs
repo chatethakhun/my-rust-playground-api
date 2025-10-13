@@ -1,7 +1,7 @@
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    routing::{get, patch},
+    routing::{delete, get, patch},
     Json, Router,
 };
 use sqlx::Error as SqlxError; // 💡 Alias SQLx Error เพื่อใช้ใน map_err
@@ -14,7 +14,7 @@ use crate::{
         color::{Color, CreateColorPayload, UpdateColorPayload},
         common::Message,
     },
-    repository::color::{create_color, get_colors, update_color},
+    repository::color::{create_color, delete_color, get_colors, update_color},
     state::AppState,
 };
 
@@ -110,15 +110,41 @@ pub async fn update_color_handler(
     }
 }
 
-// pub async fn get_color_by_id_handler(
-//     State(state): State<AppState>,
-//     Path(id): Path<i64>,
-// ) -> Result<(StatusCode, Json<Color>), (StatusCode, Json<Color>)> {
-//     match get_color_by_id(id).await {
-//         Ok(color) => Ok((StatusCode::OK, Json(color))),
+pub async fn delete_color_handler(
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+    auth_user: AuthUser, // <-- ได้มาจาก Auth Middleware
+) -> Result<StatusCode, (StatusCode, Json<Message>)> {
+    // 👈 ถ้าสำเร็จ คืนแค่ StatusCode
+
+    // เรียกใช้ repository เพื่อลบข้อมูล
+    let delete_result = delete_color(&state.db_pool, id, auth_user.user_id).await;
+
+    match delete_result {
+        Ok(_) => {
+            // สำเร็จ: คืนค่า Status 204 No Content ซึ่งเป็นมาตรฐานสำหรับ DELETE request
+            // ที่ทำงานสำเร็จและไม่มีข้อมูลใดๆ ต้องส่งกลับไปใน body
+            Ok(StatusCode::NO_CONTENT)
+        }
+        Err(e) => {
+            // ไม่สำเร็จ: แปลง Error เป็น HTTP Status Code
+            let status_code = match e {
+                SqlxError::RowNotFound => StatusCode::NOT_FOUND, // 👈 แปลงจาก repository
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+
+            let message = Message {
+                message: format!("Failed to delete color: {}", e),
+            };
+
+            Err((status_code, Json(message)))
+        }
+    }
+}
 
 pub fn color_router() -> Router<AppState> {
     Router::new()
         .route("/", get(get_colors_handler).post(create_color_handler))
         .route("/:id", patch(update_color_handler))
+        .route("/:id", delete(delete_color_handler))
 }
