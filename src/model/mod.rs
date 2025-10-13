@@ -4,4 +4,5 @@ pub mod common;
 pub mod jwt;
 pub mod kit;
 pub mod runner;
+pub mod sub_assembly;
 pub mod user;
