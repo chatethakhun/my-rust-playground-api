@@ -1,126 +1,144 @@
-// // src/api/kit.rs (ตัวอย่าง)
+use chrono::Utc;
+use sqlx::{Error, SqlitePool};
 
-// use axum::{
-//     extract::{Query, State},
-//     http::StatusCode,
-//     Json,
-// };
-// use chrono::Utc;
-// use mongodb::{bson::doc, Collection, Database};
-// use serde::Deserialize;
+// สมมติว่า import model จาก path นี้
+use crate::model::kit::{
+    CreateKitPayload, Kit, KitGrade, Status, UpdateKitPayload, UpdateStatusPayload,
+};
 
-// use crate::model::kit::Kit; // Struct สำหรับ Kit
-// use crate::state::AppState;
-// use crate::{middleware::auth::AuthUser, model::kit::KitGrade}; // Extractor สำหรับ req.user.id
+// --- CREATE ---
+pub async fn create(
+    pool: &SqlitePool,
+    user_id: i64,
+    payload: CreateKitPayload,
+) -> Result<Kit, Error> {
+    let now = Utc::now().naive_utc();
+    let new_kit_id = sqlx::query!(
+        r#"
+        INSERT INTO kits (name, grade, status, user_id, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        "#,
+        payload.name,
+        payload.grade,
+        Status::Pending, // 👈 สถานะเริ่มต้น
+        user_id,
+        now,
+        now
+    )
+    .execute(pool)
+    .await?
+    .last_insert_rowid();
 
-// use futures_util::TryStreamExt;
+    get_by_id(pool, new_kit_id, user_id).await
+}
 
-// // 1. Struct สำหรับรับ Query Parameters (req.query)
-// #[derive(Debug, Deserialize)]
-// pub struct KitQuery {
-//     // Rust จะแปลงค่าจาก URL (?isFinished=true/false) เป็น Boolean ให้อัตโนมัติ
-//     pub is_finished: Option<bool>,
-// }
+pub async fn get_all(pool: &SqlitePool, user_id: i64) -> Result<Vec<Kit>, Error> {
+    let kits = sqlx::query_as!(
+        Kit,
+        r#"
+        SELECT
+            id as "id!", -- 👈 เพิ่ม !
+            name,
+            grade as "grade: KitGrade",
+            status as "status: Status",
+            user_id as "user_id!", -- 👈 เพิ่ม !
+            created_at as "created_at!", -- 👈 เพิ่ม !
+            updated_at as "updated_at!"  -- 👈 เพิ่ม !
+        FROM kits
+        WHERE user_id = ?
+        "#,
+        user_id
+    )
+    .fetch_all(pool)
+    .await?;
+    Ok(kits)
+}
 
-// #[derive(Debug, Deserialize)]
-// pub struct CreateKitPayload {
-//     pub name: String,
-//     pub grade: KitGrade, // ใช้ String ชั่วคราว หรือใช้ KitGrade Enum ที่กำหนดไว้
-//     pub manufacturer: Option<String>,
-//     pub is_finished: Option<bool>,
-//     // ไม่ต้องมี user field เพราะจะถูกเพิ่มโดย Handler
-// }
+pub async fn get_by_id(pool: &SqlitePool, kit_id: i64, user_id: i64) -> Result<Kit, Error> {
+    let kit = sqlx::query_as!(
+        Kit,
+        r#"
+        SELECT
+            id, name,
+            grade as "grade: KitGrade",
+            status as "status: Status",
+            user_id, created_at, updated_at
+        FROM kits
+        WHERE id = ? AND user_id = ?
+        "#,
+        kit_id,
+        user_id
+    )
+    .fetch_one(pool)
+    .await?;
+    Ok(kit)
+}
 
-// // 2. Handler Function
-// // รับ State, AuthUser (แทน req.user.id), และ Query Params
+// --- UPDATE ---
+pub async fn update(
+    pool: &SqlitePool,
+    kit_id: i64,
+    user_id: i64,
+    payload: UpdateKitPayload,
+) -> Result<Kit, Error> {
+    let now = Utc::now().naive_utc();
+    let result = sqlx::query!(
+        r#"
+        UPDATE kits
+        SET name = COALESCE(?, name), grade = COALESCE(?, grade), updated_at = ?
+        WHERE id = ? AND user_id = ?
+        "#,
+        payload.name,
+        payload.grade,
+        now,
+        kit_id,
+        user_id
+    )
+    .execute(pool)
+    .await?;
 
-// pub async fn get_kits_handler(
-//     State(state): State<AppState>,
+    if result.rows_affected() == 0 {
+        return Err(Error::RowNotFound);
+    }
+    get_by_id(pool, kit_id, user_id).await
+}
 
-//     // 💡 แก้ไขตรงนี้: ใช้ชื่อตัวแปรโดยตรง
-//     auth_user: AuthUser, // ✅ ถูกต้อง: ประกาศชื่อตัวแปรที่รับค่า AuthUser
+// --- UPDATE STATUS (Specific Update) ---
+pub async fn update_status(
+    pool: &SqlitePool,
+    kit_id: i64,
+    user_id: i64,
+    payload: UpdateStatusPayload,
+) -> Result<Kit, Error> {
+    let now = Utc::now().naive_utc();
+    let result = sqlx::query!(
+        "UPDATE kits SET status = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+        payload.status,
+        now,
+        kit_id,
+        user_id
+    )
+    .execute(pool)
+    .await?;
 
-//     Query(params): Query<KitQuery>,
-// ) -> Result<Json<Vec<Kit>>, StatusCode> {
-//     // ใช้งาน Database
-//     let db: Database = state.mongo_client.database(&state.db_name);
-//     let collection = db.collection::<Kit>("kits");
+    if result.rows_affected() == 0 {
+        return Err(Error::RowNotFound);
+    }
+    get_by_id(pool, kit_id, user_id).await
+}
 
-//     // 1. สร้าง Filter (เทียบเท่า Kit.find({ isFinished: ... }))
-//     let mut filter = doc! {};
+// --- DELETE ---
+pub async fn delete_kit(pool: &SqlitePool, kit_id: i64, user_id: i64) -> Result<(), Error> {
+    let result = sqlx::query!(
+        "DELETE FROM kits WHERE id = ? AND user_id = ?",
+        kit_id,
+        user_id
+    )
+    .execute(pool)
+    .await?;
 
-//     // ตรวจสอบ isFinished (req.query.isFinished)
-//     if let Some(is_finished) = params.is_finished {
-//         filter.insert("isFinished", is_finished);
-//     }
-
-//     // 2. เพิ่มเงื่อนไข .forUser(req.user.id)
-//     // สมมติว่าใน MongoDB มี field ชื่อ userId เก็บ Owner ID ไว้
-//     filter.insert("user", auth_user.username); // ใช้ username เป็น ID
-
-//     // 3. กำหนด Sort (เทียบเท่า .sort({ updatedAt: -1 }))
-//     let options = mongodb::options::FindOptions::builder()
-//         .sort(doc! { "updatedAt": -1 }) // -1 คือ Descending
-//         .build();
-
-//     // 4. ดำเนินการค้นหา
-//     let cursor = collection
-//         .find(filter, options)
-//         .await
-//         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-//     // 5. รวบรวมผลลัพธ์ (เทียบเท่า .lean() และ res.json(kits))
-//     let kits: Vec<Kit> = cursor
-//         .try_collect()
-//         .await
-//         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-//     // 6. ส่ง Response
-//     // การทำ .populate() จะต้องถูกทำแยกใน Rust ถ้าคุณไม่ใช้ ORM
-//     // โดยทั่วไปจะทำใน Repository/Service Layer ก่อนส่งกลับ
-//     Ok(Json(kits))
-// }
-
-// // 🚀 Handler Function: POST /kits
-// pub async fn create_kit_handler(
-//     State(state): State<AppState>,
-//     auth_user: AuthUser,
-//     Json(params): Json<CreateKitPayload>,
-// ) -> Result<Json<Kit>, StatusCode> {
-//     // ใช้งาน Database และ Collection
-//     let db: Database = state.mongo_client.database(&state.db_pool);
-//     let collection: Collection<Kit> = db.collection("kits");
-
-//     // 1. สร้าง Kit Struct จาก Payload และ AuthUser
-//     //
-//     // // 1. สร้าง Kit Struct จาก Payload และ AuthUser
-
-//     // 🚨 แก้ไข: ใช้ from_chrono() เพื่อแปลงค่า
-//     let new_kit = Kit {
-//         id: None, // ให้ MongoDB สร้าง
-//         name: params.name,
-//         grade: params.grade,
-//         manufacturer: params.manufacturer,
-//         is_finished: params.is_finished.unwrap_or(false),
-//         // 🚨 แก้ไข: ใช้ username จาก AuthUser (ที่มาจาก JWT sub)]
-//         updated_at: Utc::now(),
-//         created_at: Utc::now(),
-//         user: auth_user.username,
-//         // runners: None,
-//     };
-
-//     // 2. ส่ง Kit กลับไปถึง MongoDB และจัดการ Error
-//     let inserted_result = collection.insert_one(new_kit.clone(), None).await;
-
-//     println!("New document inserted with ID: {:?}", inserted_result);
-
-//     // handle error if insert_one() failed if duplicate
-
-//     if inserted_result.is_err() {
-//         return Err(StatusCode::INTERNAL_SERVER_ERROR);
-//     }
-
-//     Ok(Json(new_kit))
-
-//     // 3. ส่ง Kit กลับไปถึง API และจัดการ Error
-// }
+    if result.rows_affected() == 0 {
+        return Err(Error::RowNotFound);
+    }
+    Ok(())
+}

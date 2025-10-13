@@ -1,80 +1,69 @@
-// src/model/kit.rs
+// src/models/kit.rs
 
-use chrono::{DateTime, Utc};
-use mongodb::bson::oid::ObjectId;
-use serde::{Deserialize, Serialize}; // 👈 สำหรับเวลาปัจจุบัน
+use chrono::NaiveDateTime;
+use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 
-// 🚀 Struct Helper สำหรับค่า Default
-// ฟังก์ชันนี้จะถูกเรียกเมื่อ Serde ไม่พบค่า updated_at ใน Payload
+// --- Enums ---
+// 🚨 เพิ่ม derive macros ที่จำเป็นสำหรับ sqlx และ serde
+// sqlx::Type บอกให้ sqlx รู้จัก enum นี้และ map กับ TEXT ใน DB
+// Serialize/Deserialize บอกให้ serde แปลงเป็น JSON string ได้
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
+#[sqlx(type_name = "TEXT")]
+// บอก sqlx ว่าจะเก็บ enum นี้เป็น TEXT ในฐานข้อมูล
+#[serde(rename_all = "snake_case")] // บอก serde ให้ใช้ snake_case (เช่น "in_progress") ใน JSON
+pub enum Status {
+    Pending,
+    InProgress,
+    Done,
+}
 
-// ----------------------------------------------------
-// ENUM: สำหรับ field 'grade' ที่มีค่าจำกัด
-// ----------------------------------------------------
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // แปลงจาก Rust (SCREAMING) ไป MongoDB (EG, HG, etc.)
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
+#[sqlx(type_name = "TEXT")]
+#[serde(rename_all = "snake_case")]
 pub enum KitGrade {
     Eg,
     Hg,
     Rg,
     Mg,
+    Mgsd,
     Pg,
     Other,
-    Mgsd,
 }
 
-// ----------------------------------------------------
-// STRUCT: Kit Model
-// ----------------------------------------------------
-
-// 🚀 Struct หลักสำหรับ Kit Model
-#[derive(Debug, Serialize, Deserialize, Clone)]
-// บอก MongoDB Driver ว่านี่คือ Struct ที่จะใช้ในการ Map ข้อมูล
+// --- Main Model: Kit ---
+// โครงสร้างหลักที่ใช้ map กับตาราง `kits` และใช้ส่งข้อมูลกลับไปให้ client
+#[derive(Debug, Serialize, Clone, FromRow)]
 pub struct Kit {
-    // 1. _id (ObjectId)
-    // - renames _id field จาก MongoDB เป็น id ใน Rust
-    // - skip_serializing_if: ไม่ต้องส่ง id กลับไปถ้าเป็น None (ตอน insert)
-    #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-    pub id: Option<ObjectId>,
-
-    // 2. name (String, required: true)
+    pub id: i64, // 👈 เมื่อดึงจาก DB จะมีค่าเสมอ
     pub name: String,
-
-    // 3. grade (Enum, required: true)
     pub grade: KitGrade,
-
-    // 4. manufacturer (String)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub manufacturer: Option<String>, // ใช้ Option เพราะอาจเป็น null/undefined
-
-    // 5. isFinished (Boolean, default: false)
-    #[serde(default)] // ใช้ค่า default ถ้าไม่มีใน MongoDB
-    pub is_finished: bool,
-
-    // 6. user (สำหรับ KitSchema.plugin(withUser))
-    // สมมติว่านี่คือ ObjectId ของ User หรือ Username String (ต้องตรงกับ Database)
-    pub user: String,
-
-    // 7. timestamps (timestamps: true)
-    #[serde(default)]
-    pub created_at: DateTime<Utc>,
-    #[serde(default)]
-    pub updated_at: DateTime<Utc>,
-    // 8. virtual field: runners (เทียบเท่า populate)
-    // ใน Rust เราไม่สามารถทำ Virtual Field ได้โดยตรง
-    // จึงใช้ Option<Vec<Runner>> เพื่อรองรับการ populate ภายหลัง
-    // (ต้องสร้าง Struct Runner แยกต่างหาก)
-    // #[serde(skip_serializing, default)] // ไม่ต้องเก็บ/ส่ง field นี้ไปยัง DB
-    // pub runners: Option<Vec<Runner>>,
+    pub status: Status,
+    pub user_id: i64,
+    pub created_at: NaiveDateTime, // 👈 เมื่อดึงจาก DB จะมีค่าเสมอ
+    pub updated_at: NaiveDateTime,
 }
 
-// **************** NOTE: Struct Runner (จำเป็นสำหรับการ populate) ****************
-// คุณต้องสร้าง Struct สำหรับ Runner ด้วย (เช่น ใน src/model/runner.rs)
-// เพื่อให้ Rust รู้จัก Type ของ Vec<Runner>
-// #[derive(Debug, Serialize, Deserialize, Clone)]
-// pub struct Runner {
-//     // กำหนด fields ของ Runner ตามความเป็นจริง
-//     pub name: String,
-//     pub kit: ObjectId, // Foreign Field
-//                        // ...
-// }
+// --- Payload Structs ---
+// Struct สำหรับรับข้อมูลจาก JSON request body เท่านั้น
+
+// ใช้สำหรับสร้าง Kit ใหม่ (POST /kits)
+#[derive(Debug, Deserialize)]
+pub struct CreateKitPayload {
+    pub name: String,
+    pub grade: KitGrade,
+}
+
+// ใช้สำหรับอัปเดตข้อมูล Kit (PATCH /kits/:id)
+// ทุกฟิลด์เป็น Option เพื่อรองรับการอัปเดตแค่บางส่วน
+#[derive(Debug, Deserialize)]
+pub struct UpdateKitPayload {
+    pub name: Option<String>,
+    pub grade: Option<KitGrade>,
+}
+
+// ใช้สำหรับอัปเดตเฉพาะ status (เช่น PATCH /kits/:id/status)
+#[derive(Debug, Deserialize)]
+pub struct UpdateStatusPayload {
+    pub status: Status,
+}
