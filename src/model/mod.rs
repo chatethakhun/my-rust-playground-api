@@ -3,6 +3,8 @@ pub mod color;
 pub mod common;
 pub mod jwt;
 pub mod kit;
+pub mod kit_part;
+pub mod paint;
 pub mod runner;
 pub mod sub_assembly;
 pub mod user;
