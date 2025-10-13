@@ -156,3 +156,31 @@ pub async fn delete_runner(pool: &SqlitePool, runner_id: i64, user_id: i64) -> R
     }
     Ok(())
 }
+
+pub async fn get_all_runners_for_kit(
+    pool: &SqlitePool,
+    kit_id: i64,
+    user_id: i64,
+) -> Result<Vec<Runner>, Error> {
+    sqlx::query_as!(
+        Runner,
+        r#"
+        SELECT
+            id as "id!",
+            name,
+            kit_id as "kit_id!",
+            color_id as "color_id!",
+            amount as "amount!: i32",
+            user_id as "user_id!",
+            is_used,
+            created_at as "created_at!",
+            updated_at as "updated_at!"
+        FROM runners
+        WHERE kit_id = ? AND user_id = ? -- 🛡️ เช็ค user_id เพื่อความปลอดภัย
+        "#,
+        kit_id,
+        user_id
+    )
+    .fetch_all(pool)
+    .await
+}

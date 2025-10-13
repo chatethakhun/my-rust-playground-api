@@ -14,7 +14,12 @@ use sqlx::Error as SqlxError;
 
 // สมมติว่า import สิ่งที่จำเป็น
 
-use crate::{middleware::auth::AuthUser, model::kit::KitWithRunners, state::AppState};
+use crate::{
+    middleware::auth::AuthUser,
+    model::{kit::KitWithRunners, runner::Runner, sub_assembly::SubAssembly},
+    repository::{runner::get_all_runners_for_kit, sub_assembly::get_all_sub_assemblies_for_kit},
+    state::AppState,
+};
 use crate::{
     model::kit::{CreateKitPayload, Kit, UpdateKitPayload, UpdateStatusPayload},
     repository::kit::{create, delete_kit, get_all, get_by_id, update, update_status},
@@ -95,6 +100,32 @@ async fn delete_kit_handler(
     }
 }
 
+// GET /kits/:kit_id/runners
+pub async fn get_runners_by_kit_id_handler(
+    State(state): State<AppState>,
+    auth_user: AuthUser,
+    Path(kit_id): Path<i64>, // 👈 รับ kit_id จาก Path
+) -> Result<Json<Vec<Runner>>, (StatusCode, String)> {
+    match get_all_runners_for_kit(&state.db_pool, kit_id, auth_user.user_id).await {
+        Ok(runners) => Ok(Json(runners)),
+        // คืนค่าเป็น array ว่างถ้าไม่เจอข้อมูล, ไม่ใช่ error
+        Err(SqlxError::RowNotFound) => Ok(Json(vec![])),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
+pub async fn get_sub_assemblies_by_kit_id_handler(
+    State(state): State<AppState>,
+    auth_user: AuthUser,
+    Path(kit_id): Path<i64>, // 👈 รับ kit_id จาก Path
+) -> Result<Json<Vec<SubAssembly>>, (StatusCode, String)> {
+    match get_all_sub_assemblies_for_kit(&state.db_pool, kit_id, auth_user.user_id).await {
+        Ok(sub_assemblies) => Ok(Json(sub_assemblies)),
+        Err(SqlxError::RowNotFound) => Ok(Json(vec![])), // คืนค่า array ว่างถ้าไม่เจอ
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
 pub fn kit_router() -> Router<crate::state::AppState> {
     Router::new()
         .route("/", post(create_kit_handler).get(get_all_kits_handler))
@@ -106,6 +137,11 @@ pub fn kit_router() -> Router<crate::state::AppState> {
         )
         // 🚀 Route พิเศษสำหรับอัปเดต status
         .route("/:id/status", patch(update_kit_status_handler))
+        .route("/:id/runners", get(get_runners_by_kit_id_handler))
+        .route(
+            "/:kit_id/sub_assemblies",
+            get(get_sub_assemblies_by_kit_id_handler),
+        )
 }
 
 // // ฟังก์ชันรวม Routes (Option)
