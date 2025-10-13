@@ -50,8 +50,8 @@ pub async fn login_handler(
             // Login สำเร็จ
             // 4. สร้าง Claims: ใช้ .clone() เพื่อสร้างสำเนาของ username
             //    และ Move สำเนาเข้าไปใน Claims::new()
-            let username_for_claims = payload.username.clone(); // 👈 สร้างสำเนาที่นี่
-            let claims = Claims::new(username_for_claims, 24);
+
+            let claims = Claims::new(user.id.unwrap(), 24);
 
             let token = encode(
                 &Header::new(jsonwebtoken::Algorithm::HS256),
@@ -160,11 +160,11 @@ pub async fn register_handler(
     };
 
     match create_user(&state.db_pool, new_user).await {
-        Ok(_) => {
+        Ok(user_id) => {
             // 1. สร้าง Claims: ใช้ .clone() เพื่อสร้างสำเนาของ username
             //    และ Move สำเนาเข้าไปใน Claims::new()
-            let username_for_claims = payload.username.clone(); // 👈 สร้างสำเนาที่นี่
-            let claims = Claims::new(username_for_claims, 24);
+
+            let claims = Claims::new(user_id, 24);
 
             let token = encode(
                 &Header::new(jsonwebtoken::Algorithm::HS256),

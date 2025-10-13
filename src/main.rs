@@ -6,6 +6,7 @@ mod middleware;
 mod model;
 mod repository;
 mod state;
+
 use crate::api::i18n::serve_i18n_file;
 
 use crate::model::common::Message;
@@ -79,8 +80,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/i18n/:lng/:ns", get(serve_i18n_file))
         .nest(
             "/v2/api",
-            Router::new().nest("/auth", api::auth::auth_router()), // URL: /v2/api/auth/...
-                                                                   // .nest("/kits", api::kit::kit_router()), // URL: /v2/api/kits/...
+            Router::new()
+                .nest("/auth", api::auth::auth_router())
+                .nest("/colors", api::color::color_router()), // URL: /v2/api/auth/...
+                                                              // .nest("/kits", api::kit::kit_router()), // URL: /v2/api/kits/...
         )
         .layer(cors)
         .with_state(app_state.clone());

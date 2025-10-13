@@ -11,9 +11,9 @@ use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::Deserialize;
 
 // Struct ที่จะใช้เป็น Extractor ใน Handler
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct AuthUser {
-    pub username: String, // 👈 เก็บ ID ที่ดึงมาจาก JWT Claims
+    pub user_id: i64, // 👈 เก็บ ID ที่ดึงมาจาก JWT Claims
 }
 
 // ----------------------------------------------------
@@ -56,11 +56,14 @@ impl FromRequestParts<AppState> for AuthUser {
             &DecodingKey::from_secret(state.jwt_secret.as_ref()),
             &validation,
         )
-        .map_err(|_| StatusCode::UNAUTHORIZED)?; // 401: Token ไม่ถูกต้อง/หมดอายุ
+        .map_err(|e| {
+            eprintln!("JWT Decode Error: {}", e); // 👈 เพิ่ม Debugging Log
+            StatusCode::UNAUTHORIZED
+        })?;
 
         // 3. สร้าง AuthUser จาก Claims
         Ok(AuthUser {
-            username: token_data.claims.sub, // ดึง 'sub' (username) จาก Payload
+            user_id: token_data.claims.sub, // ดึง 'sub' (username) จาก Payload
         })
     }
 }

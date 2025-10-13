@@ -1,46 +1,36 @@
 // src/model/color.rs
 
-use mongodb::bson::{
-    oid::ObjectId, // สำหรับ _id
-    DateTime,      // สำหรับ timestamps
-};
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow; // 🚨 ต้องใช้ FromRow สำหรับ SQLx
 
-// 🚀 Struct หลักสำหรับ Color Model
-#[derive(Debug, Serialize, Deserialize, Clone)]
+// 🚨 Color Struct สำหรับ SQLx Mapping
+#[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
 pub struct Color {
-    // 1. _id
-    #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-    pub id: Option<ObjectId>,
+    // Primary Key (Auto-Increment ใน SQLite)
+    pub id: Option<i64>,
 
-    // 2. name (String, required: true)
+    // ข้อมูลสี
+    pub name: String, // 🚨 เพิ่ม name field ที่หายไป
+    pub code: String,
+    pub hex: String,
+
+    // Boolean Fields (ใช้ bool ใน Rust)
+    pub is_clear: bool,
+    pub is_multi: bool,
+
+    // 🚨 Foreign Key: ใช้ User ID (i64) แทน Struct User
+    pub user_id: i64,
+
+    // Timestamps (NaiveDateTime ถูกต้องแล้วสำหรับ SQLx/chrono)
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
+}
+#[derive(serde::Deserialize)]
+pub struct CreateColorPayload {
     pub name: String,
-
-    // 3. code (String)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub code: Option<String>, // ใช้ Option เพราะอาจเป็น null/undefined
-
-    // 4. hex (String)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub hex: Option<String>, // ใช้ Option เพราะอาจเป็น null/undefined
-
-    // 5. multiple (Boolean, default: false)
-    // #[serde(default)] จะทำให้ค่า default เป็น false หาก Field ไม่มีใน DB
-    #[serde(default)]
-    pub multiple: bool,
-
-    // 6. clearColor (Boolean, default: false)
-    #[serde(default)]
-    pub clear_color: bool, // ใช้ snake_case ตามหลัก Rust
-
-    // 7. user (สำหรับ ColorSchema.plugin(withUser))
-    // สมมติว่าเก็บ User ID/Username เป็น String
-    pub user: String,
-
-    // 8. timestamps (timestamps: true)
-    // #[serde(rename = "createdAt", skip_serializing_if = "Option::is_none")]
-    pub created_at: Option<DateTime>,
-
-    // #[serde(rename = "updatedAt", skip_serializing_if = "Option::is_none")]
-    pub updated_at: Option<DateTime>,
+    pub code: String,
+    pub hex: String,
+    pub is_clear: Option<bool>,
+    pub is_multi: Option<bool>,
 }

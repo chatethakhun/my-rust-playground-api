@@ -1,5 +1,5 @@
 use crate::model::user::User;
-use sqlx::{sqlite::SqliteQueryResult, Error, SqlitePool}; // 🚨 ใช้ Error จาก sqlx
+use sqlx::{Error, SqlitePool}; // 🚨 ใช้ Error จาก sqlx
 
 // 🚨 เปลี่ยน Return Type: ใช้ sqlx::Error แทน mongodb::error::Error
 pub async fn find_by_username(pool: &SqlitePool, username: &str) -> Result<Option<User>, Error> {
@@ -14,7 +14,7 @@ pub async fn find_by_username(pool: &SqlitePool, username: &str) -> Result<Optio
     Ok(user)
 }
 
-pub async fn create_user(pool: &SqlitePool, new_user: User) -> Result<SqliteQueryResult, Error> {
+pub async fn create_user(pool: &SqlitePool, new_user: User) -> Result<i64, Error> {
     // ✅ ใช้ sqlx::Error
     // 1. 🚨 ใช้ SQL Query และ FromRow Macro
     let result = sqlx::query!(
@@ -30,8 +30,14 @@ pub async fn create_user(pool: &SqlitePool, new_user: User) -> Result<SqliteQuer
     .execute(pool) // 🚨 ใช้ execute() แทน fetch_optional()
     .await?;
 
+    // 3. 🚀 ดึง Last Insert ID (Primary Key ที่ถูกสร้างอัตโนมัติ)
+    let last_insert_id = result.last_insert_rowid();
+
+    // 4. กำหนด ID กลับเข้าสู่ Struct User
+    // ใน SQLite, ID จะเป็น i64
+
     // 2. คืนค่า Result
-    Ok(result) // ✅ คืนค่า SqliteQueryResult
+    Ok(last_insert_id) // ✅ คืนค่า SqliteQueryResult
 }
 
 // 2. 🚀 ฟังก์ชันบันทึกผู้ใช้ใหม่ (New Function)
