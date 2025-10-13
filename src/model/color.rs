@@ -34,3 +34,14 @@ pub struct CreateColorPayload {
     pub is_clear: Option<bool>,
     pub is_multi: Option<bool>,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateColorPayload {
+    // Fields ที่อนุญาตให้อัปเดต
+    pub name: Option<String>,
+    pub code: Option<String>,
+    pub hex: Option<String>,
+    pub is_clear: Option<bool>,
+    pub is_multi: Option<bool>,
+    // ไม่รวม user_id, created_at
+}
