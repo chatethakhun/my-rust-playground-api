@@ -4,6 +4,8 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
+use crate::model::runner::Runner;
+
 // --- Enums ---
 // 🚨 เพิ่ม derive macros ที่จำเป็นสำหรับ sqlx และ serde
 // sqlx::Type บอกให้ sqlx รู้จัก enum นี้และ map กับ TEXT ใน DB
@@ -42,6 +44,17 @@ pub struct Kit {
     pub user_id: i64,
     pub created_at: NaiveDateTime, // 👈 เมื่อดึงจาก DB จะมีค่าเสมอ
     pub updated_at: NaiveDateTime,
+}
+
+// ✨ สร้าง Struct ใหม่สำหรับ Response โดยเฉพาะ
+//
+#[derive(Debug, Serialize)]
+pub struct KitWithRunners {
+    // ใช้ flatten attribute เพื่อให้ฟิลด์ทั้งหมดของ Kit ถูกใส่เข้ามาในระดับเดียวกัน
+    #[serde(flatten)]
+    pub kit: Kit,
+    // เพิ่มฟิลด์ runners ที่เป็น Vec<Runner>
+    pub runners: Vec<Runner>,
 }
 
 // --- Payload Structs ---
