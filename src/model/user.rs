@@ -1,37 +1,18 @@
 // src/model/user.rs
 
+use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 // User Struct (Database Schema)
 #[derive(Debug, Serialize, Deserialize)]
 pub struct User {
-    #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-    pub id: Option<mongodb::bson::oid::ObjectId>,
+    pub id: Option<i64>,
     pub username: String,
-    pub password: String,
-    pub name: Option<String>,
-    pub email: Option<String>,
+    pub password_hash: String,
     pub role: String,
-    pub avatar: Option<String>,
+    pub avatar_url: Option<String>,
     pub bio: Option<String>,
     pub full_name: Option<String>,
-}
-
-// Struct สำหรับรับข้อมูล Login
-#[derive(Debug, Deserialize)]
-pub struct LoginPayload {
-    pub username: String,
-    pub password: String,
-}
-
-// Struct สำหรับ Response ทั่วไป
-#[derive(Debug, Serialize, Clone)]
-pub struct Message {
-    pub message: String,
-}
-
-#[derive(Debug, Serialize)]
-pub struct AuthResponse {
-    pub message: String,
-    pub token: String, // 👈 ส่ง JWT Token กลับไป
+    pub created_at: Option<NaiveDateTime>, // Stores creation time in UTC,
+    pub updated_at: Option<NaiveDateTime>, // Stores creation time in UTC,
 }

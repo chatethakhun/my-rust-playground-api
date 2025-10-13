@@ -7,19 +7,22 @@ mod model;
 mod repository;
 mod state;
 use crate::api::i18n::serve_i18n_file;
-use crate::model::user::Message;
+
+use crate::model::common::Message;
 use crate::state::AppState;
 use axum::extract::State;
 use axum::http::{self, header};
 use axum::Json;
 use axum::{routing::get, Router};
 use dotenvy;
-use mongodb::Client;
 use std::time::Duration; // Optional: for max_age
 use tokio::net::TcpListener;
 use tower_http::cors::AllowOrigin; // 👈 For flexible origin control
 use tower_http::cors::CorsLayer; // 👈 Import CorsLayer // 👈 ต้องนำเข้า TcpListener ด้วย // นำเข้า Message สำหรับ Health Check
                                  // Handler สำหรับ Health Check (สามารถย้ายไป api/health.rs ได้)
+                                 //
+use sqlx::{migrate, SqlitePool};
+
 async fn mongo_health_check(State(_state): State<AppState>) -> Json<Message> {
     // ... โค้ด Health Check
     Json(Message {
@@ -49,18 +52,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // กำหนดระยะเวลาที่ Browser ควร Cache CORS policy (optional)
         .max_age(Duration::from_secs(60 * 60));
     // 1. Setup State (Client DB Name)
-    let database_url =
-        std::env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env file");
-    let db_name = std::env::var("MONGO_DATABASE_NAME").unwrap_or_else(|_| "auth_db".to_string());
-    // 🚀 ส่วนที่แก้ไข: การดึงค่า PORT
 
-    // สร้าง MongoDB Client (ต้องใช้ .await?)
-    let client = Client::with_uri_str(&database_url).await?;
+    // 1. สร้าง SQLite Connection Pool
+    let database_url = std::env::var("DATABASE_URL")
+        .expect("DATABASE_URL must be set in .env file (sqlite:./my_app.db)");
+
+    // 🚨 สร้าง Pool (ใช้ connect_lazy สำหรับ SQLite ก็ได้ แต่ connect ก็ใช้ได้)
+    let pool = SqlitePool::connect(&database_url).await?;
+    // 🚀 ส่วนที่แก้ไข: การดึงค่า PORT
+    migrate!("./migrations").run(&pool).await?;
     let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set in .env file");
     // 2. สร้าง AppState struct (ตัวแปรที่หายไป)
     let app_state = AppState {
-        mongo_client: client,
-        db_name,
+        db_pool: pool,
         jwt_secret,
     };
 
@@ -75,9 +79,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/i18n/:lng/:ns", get(serve_i18n_file))
         .nest(
             "/v2/api",
-            Router::new()
-                .nest("/auth", api::auth::auth_router()) // URL: /v2/api/auth/...
-                .nest("/kits", api::kit::kit_router()), // URL: /v2/api/kits/...
+            Router::new().nest("/auth", api::auth::auth_router()), // URL: /v2/api/auth/...
+                                                                   // .nest("/kits", api::kit::kit_router()), // URL: /v2/api/kits/...
         )
         .layer(cors)
         .with_state(app_state.clone());

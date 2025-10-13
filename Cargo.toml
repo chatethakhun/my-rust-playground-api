@@ -27,4 +27,8 @@ async-trait = "0.1" # 👈 เพิ่มบรรทัดนี้
 # Environment Variables
 dotenvy = "0.15"
 
+
+# 🚀 MySQL Driver: SQLx
+sqlx = { version = "0.7", features = ["runtime-tokio", "macros", "sqlite", "chrono"] }
+
 # ... (Tracing/Logging อื่นๆ)

@@ -1,10 +1,10 @@
 // src/state.rs
 
-use mongodb::Client;
+// 🚨 ต้องใช้ MySqlPool แทน Client
 
+use sqlx::SqlitePool;
 #[derive(Clone)]
 pub struct AppState {
-    pub mongo_client: Client,
-    pub db_name: String,
+    pub db_pool: SqlitePool, // 🚨 เปลี่ยน Type
     pub jwt_secret: String,
 }
