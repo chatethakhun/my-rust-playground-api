@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
 use crate::model::runner::Runner;
+// 2. KitStatus enum (เพิ่ม FromStr)
+use std::str::FromStr;
 
 // --- Enums ---
 // 🚨 เพิ่ม derive macros ที่จำเป็นสำหรับ sqlx และ serde
@@ -19,6 +21,19 @@ pub enum KitStatus {
     Pending,
     InProgress,
     Done,
+}
+
+impl FromStr for KitStatus {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "pending" => Ok(KitStatus::Pending),
+            "in_progress" => Ok(KitStatus::InProgress),
+            "done" => Ok(KitStatus::Done),
+            _ => Err(format!("Invalid status: {}", s)),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
