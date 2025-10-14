@@ -1,4 +1,4 @@
-use crate::model::user::User;
+use crate::model::user::{User, UserResponse};
 use sqlx::{Error, SqlitePool}; // 🚨 ใช้ Error จาก sqlx
 
 // 🚨 เปลี่ยน Return Type: ใช้ sqlx::Error แทน mongodb::error::Error
@@ -52,3 +52,16 @@ pub async fn create_user(pool: &SqlitePool, new_user: User) -> Result<i64, Error
 //     // // เราจึงส่ง None ใน id เพื่อให้ MongoDB สร้าง ObjectId ให้
 //     // collection.insert_one(new_user, None).await
 // }
+pub async fn get_user_by_id(pool: &SqlitePool, id: i64) -> Result<UserResponse, Error> {
+    // ✅ ใช้ sqlx::Error
+    // 1. 🚨 ใช้ SQL Query และ FromRow Macro
+    let user = sqlx::query_as!(
+        UserResponse,
+        "SELECT id, username, role, avatar_url, bio, full_name FROM users WHERE id = ?",
+        id
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(user)
+}
