@@ -5,6 +5,8 @@
   "form": {
     "email_ph": "Email",
     "email_require": "Email is required",
+    "username_ph": "Username",
+    "username_require": "Username is required",
     "password_ph": "Password",
     "password_require": "Password is required",
     "submit": "Login",

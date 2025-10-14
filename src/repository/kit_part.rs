@@ -50,6 +50,21 @@ pub async fn get_all_kit_parts_for_sub_assembly(
     .await
 }
 
+pub async fn get_all_kit_parts_for_kit(
+    pool: &SqlitePool,
+    kit_id: i64,
+    user_id: i64,
+) -> Result<Vec<KitPart>, Error> {
+    sqlx::query_as!(
+        KitPart,
+        "SELECT * FROM kit_parts WHERE kit_id = ? AND user_id = ?",
+        kit_id,
+        user_id
+    )
+    .fetch_all(pool)
+    .await
+}
+
 pub async fn get_kit_part_by_id(
     pool: &SqlitePool,
     id: i64,

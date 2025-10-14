@@ -10,6 +10,7 @@ mod state;
 use crate::api::i18n::serve_i18n_file;
 
 use crate::api::kit::kit_router;
+use crate::api::kit_part::kit_part_router;
 use crate::model::common::Message;
 use crate::state::AppState;
 use axum::extract::State;
@@ -56,8 +57,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 1. Setup State (Client DB Name)
 
     // 1. สร้าง SQLite Connection Pool
-    let database_url = std::env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set in .env file (sqlite:./my_app.db)");
+    let database_url = if cfg!(debug_assertions) {
+        // Development mode
+        std::env::var("DEV_DATABASE_URL").unwrap_or_else(|_| "sqlite:./dev_app.db".to_string())
+    } else {
+        // Production mode
+        std::env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env file")
+    };
 
     // 🚨 สร้าง Pool (ใช้ connect_lazy สำหรับ SQLite ก็ได้ แต่ connect ก็ใช้ได้)
     let pool = SqlitePool::connect(&database_url).await?;
@@ -87,8 +93,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .nest("/kits", api::kit::kit_router())
                 .nest("/runners", api::runner::runner_router())
                 .nest("/sub_assemblies", api::sub_assembly::sub_assembly_router())
-                .nest("/kit_part", kit_router()), // URL: /v2/api/auth/...
-                                                  // .nest("/kits", api::kit::kit_router()), // URL: /v2/api/kits/...
+                .nest("/kit_parts", kit_part_router()), // URL: /v2/api/auth/...
+                                                        // .nest("/kits", api::kit::kit_router()), // URL: /v2/api/kits/...
         )
         .layer(cors)
         .with_state(app_state.clone());

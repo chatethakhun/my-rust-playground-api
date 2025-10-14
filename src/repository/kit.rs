@@ -41,14 +41,20 @@ pub async fn get_all(
     user_id: i64,
     kit_status: Option<KitStatus>,
 ) -> Result<Vec<Kit>, Error> {
+    let status_str = kit_status.map(|s| match s {
+        KitStatus::Pending => "pending",
+        KitStatus::InProgress => "in_progress",
+        KitStatus::Done => "done",
+    });
+
     let kits = sqlx::query_as::<_, Kit>(
         r#"SELECT id, name, grade, status, user_id, created_at, updated_at
           FROM kits
           WHERE user_id = ? AND (? IS NULL OR status = ?)"#,
     )
     .bind(user_id)
-    .bind(&kit_status)
-    .bind(&kit_status)
+    .bind(&status_str)
+    .bind(&status_str)
     .fetch_all(pool)
     .await?;
 

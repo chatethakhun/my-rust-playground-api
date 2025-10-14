@@ -5,6 +5,8 @@
   "form": {
     "email_ph": "อีเมล",
     "email_require": "อีเมลจำเป็น",
+    "username_ph": "ชื่อผู้ใช้",
+    "username_require": "ชื่อผู้ใช้จำเป็น",
     "password_ph": "รหัสผ่าน",
     "password_require": "รหัสผ่านจำเป็น",
     "submit": "เข้าสู่ระบบ",

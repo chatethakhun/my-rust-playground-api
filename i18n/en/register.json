@@ -9,6 +9,8 @@
     "password_require": "Password is required",
     "c_password_ph": "Confirm Password",
     "c_password_require": "Confirm Password is required",
+    "username_ph": "Username",
+    "username_require": "Username is required",
     "save": "Register",
     "saving": "Saving...",
     "already_acc": "Already have an account?",

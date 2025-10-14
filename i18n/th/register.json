@@ -9,6 +9,8 @@
     "password_require": "รหัสผ่านจำเป็น",
     "c_password_ph": "ยืนยันรหัสผ่าน",
     "c_password_require": "ยืนยันรหัสผ่านจำเป็น",
+    "username_ph": "ชื่อผู้ใช้",
+    "username_require": "ชื่อผู้ใช้จำเป็น",
     "save": "สมัครสมาชิก",
     "saving": "กำลังสมัครสมาชิก...",
     "already_acc": "มีบัญชีอยู่แล้ว?",

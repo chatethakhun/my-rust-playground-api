@@ -1,8 +1,3 @@
-// use crate::repository::kit::{create_kit_handler, get_kits_handler};
-
-// use axum::{routing::get, routing::post, Router};
-
-// use crate::state::AppState;
 //
 use axum::{
     extract::{Path, Query, State},
@@ -18,10 +13,14 @@ use crate::{
     middleware::auth::AuthUser,
     model::{
         kit::{KitQuery, KitWithRunners},
+        kit_part::KitPart,
         runner::Runner,
         sub_assembly::SubAssembly,
     },
-    repository::{runner::get_all_runners_for_kit, sub_assembly::get_all_sub_assemblies_for_kit},
+    repository::{
+        kit_part::get_all_kit_parts_for_kit, runner::get_all_runners_for_kit,
+        sub_assembly::get_all_sub_assemblies_for_kit,
+    },
     state::AppState,
 };
 use crate::{
@@ -131,6 +130,18 @@ pub async fn get_sub_assemblies_by_kit_id_handler(
     }
 }
 
+pub async fn get_kit_part_by_kit_id_handler(
+    State(state): State<AppState>,
+    auth_user: AuthUser,
+    Path(kit_id): Path<i64>, // 👈 รับ kit_id จาก Path
+) -> Result<Json<Vec<KitPart>>, (StatusCode, String)> {
+    match get_all_kit_parts_for_kit(&state.db_pool, kit_id, auth_user.user_id).await {
+        Ok(kit_parts) => Ok(Json(kit_parts)),
+        Err(SqlxError::RowNotFound) => Ok(Json(vec![])), // คืนค่า array ว่างถ้าไม่เจอ
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
 pub fn kit_router() -> Router<crate::state::AppState> {
     Router::new()
         .route("/", post(create_kit_handler).get(get_all_kits_handler))
@@ -144,9 +155,10 @@ pub fn kit_router() -> Router<crate::state::AppState> {
         .route("/:id/status", patch(update_kit_status_handler))
         .route("/:id/runners", get(get_runners_by_kit_id_handler))
         .route(
-            "/:kit_id/sub_assemblies",
+            "/:id/sub_assemblies",
             get(get_sub_assemblies_by_kit_id_handler),
         )
+        .route("/:id/kit_parts", get(get_kit_part_by_kit_id_handler))
 }
 
 // // ฟังก์ชันรวม Routes (Option)
