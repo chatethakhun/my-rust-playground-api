@@ -16,3 +16,13 @@ pub struct User {
     pub created_at: Option<NaiveDateTime>, // Stores creation time in UTC,
     pub updated_at: Option<NaiveDateTime>, // Stores creation time in UTC,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UserResponse {
+    pub id: Option<i64>,
+    pub username: String,
+    pub role: String,
+    pub avatar_url: Option<String>,
+    pub bio: Option<String>,
+    pub full_name: Option<String>,
+}

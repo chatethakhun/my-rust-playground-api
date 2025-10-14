@@ -9,7 +9,6 @@ mod state;
 
 use crate::api::i18n::serve_i18n_file;
 
-use crate::api::kit::kit_router;
 use crate::api::kit_part::kit_part_router;
 use crate::model::common::Message;
 use crate::state::AppState;

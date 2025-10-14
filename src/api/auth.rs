@@ -1,14 +1,20 @@
+use crate::middleware::auth::AuthUser;
 use crate::model::auth::AuthResponse;
 use crate::model::jwt::Claims;
-use crate::model::user::User;
+use crate::model::user::{User, UserResponse};
 use jsonwebtoken::{encode, EncodingKey, Header};
 
-use crate::repository::user::{create_user, find_by_username};
+use crate::repository::user::{create_user, find_by_username, get_user_by_id};
 
 use crate::{model::auth::LoginPayload, state::AppState};
 
-use axum::{extract::State, http::StatusCode, routing::post, Json, Router}; // 👈 นำเข้า Repository Function
-                                                                           //                                                                            // สำหรับ Hashing
+use axum::{
+    extract::State,
+    http::StatusCode,
+    routing::{get, post},
+    Json, Router,
+}; // 👈 นำเข้า Repository Function
+   //                                                                            // สำหรับ Hashing
 use argon2::{
     password_hash::{
         rand_core::OsRng,
@@ -183,9 +189,28 @@ pub async fn register_handler(
     }
 }
 
+/// GET /api/v2/auth/me - ดึงข้อมูล user ที่ login อยู่
+pub async fn get_auth_user_handler(
+    State(state): State<AppState>,
+    auth_user: AuthUser, // ✅ ดึง user_id จาก JWT token
+) -> Result<Json<UserResponse>, (StatusCode, String)> {
+    match get_user_by_id(&state.db_pool, auth_user.user_id).await {
+        Ok(user) => Ok(Json(user)),
+        Err(sqlx::Error::RowNotFound) => Err((StatusCode::NOT_FOUND, "User not found".to_string())),
+        Err(e) => {
+            eprintln!("Database error: {:?}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Internal server error".to_string(),
+            ))
+        }
+    }
+}
+
 // ฟังก์ชันรวม Routes (Option)
 pub fn auth_router() -> Router<AppState> {
     Router::new()
         .route("/login", post(login_handler))
         .route("/register", post(register_handler))
+        .route("/me", get(get_auth_user_handler))
 }
