@@ -16,6 +16,18 @@ pub async fn get_colors(pool: &SqlitePool, user_id: i64) -> Result<Vec<Color>, E
     Ok(colors)
 }
 
+pub async fn get_color_by_id(pool: &SqlitePool, color_id: i64) -> Result<Color, Error> {
+    let color = sqlx::query_as!(
+        Color,
+        "SELECT id, name, code, hex, is_clear, is_multi, user_id, created_at, updated_at FROM colors WHERE id = ?",
+        color_id
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(color)
+}
+
 pub async fn create_color(pool: &SqlitePool, color: Color) -> Result<Color, Error> {
     // 1. 🚀 INSERT: สร้างแถวใหม่และดึง ID
     // 💡 Note: เราใส่ user_id ใน color struct แต่ SQLx ต้องการมันใน query

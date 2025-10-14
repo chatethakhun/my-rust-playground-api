@@ -1,7 +1,7 @@
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    routing::{delete, get, patch},
+    routing::{get, patch},
     Json, Router,
 };
 use sqlx::Error as SqlxError; // 💡 Alias SQLx Error เพื่อใช้ใน map_err
@@ -14,7 +14,7 @@ use crate::{
         color::{Color, CreateColorPayload, UpdateColorPayload},
         common::Message,
     },
-    repository::color::{create_color, delete_color, get_colors, update_color},
+    repository::color::{create_color, delete_color, get_color_by_id, get_colors, update_color},
     state::AppState,
 };
 
@@ -142,9 +142,34 @@ pub async fn delete_color_handler(
     }
 }
 
+async fn get_color_handler(
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+) -> Result<Json<Color>, (StatusCode, Json<Message>)> {
+    match get_color_by_id(&state.db_pool, id).await {
+        Ok(color) => Ok(Json(color)),
+        Err(e) => {
+            let status_code = match e {
+                SqlxError::RowNotFound => StatusCode::NOT_FOUND,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+
+            let message = Message {
+                message: format!("Failed to get color: {}", e),
+            };
+
+            Err((status_code, Json(message)))
+        }
+    }
+}
+
 pub fn color_router() -> Router<AppState> {
     Router::new()
         .route("/", get(get_colors_handler).post(create_color_handler))
-        .route("/:id", patch(update_color_handler))
-        .route("/:id", delete(delete_color_handler))
+        .route(
+            "/:id",
+            patch(update_color_handler)
+                .delete(delete_color_handler)
+                .get(get_color_handler),
+        )
 }

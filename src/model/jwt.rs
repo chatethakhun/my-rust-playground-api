@@ -31,9 +31,8 @@ impl Claims {
         self.exp < now
     }
 
-    /// ตรวจสอบว่า token ยังใช้งานได้ไหม (ไม่หมดอายุ และไม่ออกในอนาคต)
-    pub fn is_valid(&self) -> bool {
-        let now = Utc::now().timestamp();
-        self.iat <= now && self.exp > now
-    }
+    // pub fn is_valid(&self) -> bool {
+    //     let now = Utc::now().timestamp();
+    //     self.iat <= now && self.exp > now
+    // }
 }
