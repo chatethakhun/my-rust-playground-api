@@ -13,8 +13,9 @@ use crate::model::runner::Runner;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "TEXT")]
 // บอก sqlx ว่าจะเก็บ enum นี้เป็น TEXT ในฐานข้อมูล
+#[sqlx(rename_all = "snake_case")] // ✅ เพิ่มบรรทัดนี้สำหรับ sqlx
 #[serde(rename_all = "snake_case")] // บอก serde ให้ใช้ snake_case (เช่น "in_progress") ใน JSON
-pub enum Status {
+pub enum KitStatus {
     Pending,
     InProgress,
     Done,
@@ -40,7 +41,7 @@ pub struct Kit {
     pub id: i64, // 👈 เมื่อดึงจาก DB จะมีค่าเสมอ
     pub name: String,
     pub grade: KitGrade,
-    pub status: Status,
+    pub status: KitStatus,
     pub user_id: i64,
     pub created_at: NaiveDateTime, // 👈 เมื่อดึงจาก DB จะมีค่าเสมอ
     pub updated_at: NaiveDateTime,
@@ -78,5 +79,10 @@ pub struct UpdateKitPayload {
 // ใช้สำหรับอัปเดตเฉพาะ status (เช่น PATCH /kits/:id/status)
 #[derive(Debug, Deserialize)]
 pub struct UpdateStatusPayload {
-    pub status: Status,
+    pub status: KitStatus,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct KitQuery {
+    pub status: Option<KitStatus>,
 }
