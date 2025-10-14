@@ -65,7 +65,11 @@ impl FromRequestParts<AppState> for AuthUser {
             )
         })?;
 
-        // 5. สร้าง AuthUser
+        // ✅ เพิ่มการตรวจสอบเพิ่มเติม
+        if token_data.claims.is_expired() {
+            return Err((StatusCode::UNAUTHORIZED, "Token expired".to_string()));
+        }
+
         Ok(AuthUser {
             user_id: token_data.claims.sub,
         })
