@@ -63,13 +63,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 1. Setup State (Client DB Name)
 
     // 1. สร้าง SQLite Connection Pool
-    let database_url = if cfg!(debug_assertions) {
-        // Development mode
-        std::env::var("DEV_DATABASE_URL").unwrap_or_else(|_| "sqlite:./dev_app.db".to_string())
-    } else {
-        // Production mode
-        std::env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env file")
-    };
+    let database_url =
+        std::env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env file");
 
     // 🚨 สร้าง Pool (ใช้ connect_lazy สำหรับ SQLite ก็ได้ แต่ connect ก็ใช้ได้)
     let pool = SqlitePool::connect(&database_url).await?;
