@@ -5,7 +5,7 @@
 // use crate::state::AppState;
 //
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     routing::{get, patch, post},
     Json, Router,
@@ -16,7 +16,11 @@ use sqlx::Error as SqlxError;
 
 use crate::{
     middleware::auth::AuthUser,
-    model::{kit::KitWithRunners, runner::Runner, sub_assembly::SubAssembly},
+    model::{
+        kit::{KitQuery, KitWithRunners},
+        runner::Runner,
+        sub_assembly::SubAssembly,
+    },
     repository::{runner::get_all_runners_for_kit, sub_assembly::get_all_sub_assemblies_for_kit},
     state::AppState,
 };
@@ -41,8 +45,9 @@ pub async fn create_kit_handler(
 pub async fn get_all_kits_handler(
     State(state): State<AppState>,
     auth_user: AuthUser,
+    Query(params): Query<KitQuery>,
 ) -> Result<Json<Vec<Kit>>, (StatusCode, String)> {
-    match get_all(&state.db_pool, auth_user.user_id).await {
+    match get_all(&state.db_pool, auth_user.user_id, params.status).await {
         Ok(kits) => Ok(Json(kits)),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }

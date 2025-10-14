@@ -9,6 +9,7 @@ mod state;
 
 use crate::api::i18n::serve_i18n_file;
 
+use crate::api::kit::kit_router;
 use crate::model::common::Message;
 use crate::state::AppState;
 use axum::extract::State;
@@ -85,8 +86,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .nest("/colors", api::color::color_router())
                 .nest("/kits", api::kit::kit_router())
                 .nest("/runners", api::runner::runner_router())
-                .nest("/sub_assemblies", api::sub_assembly::sub_assembly_router()), // URL: /v2/api/auth/...
-                                                                                    // .nest("/kits", api::kit::kit_router()), // URL: /v2/api/kits/...
+                .nest("/sub_assemblies", api::sub_assembly::sub_assembly_router())
+                .nest("/kit_part", kit_router()), // URL: /v2/api/auth/...
+                                                  // .nest("/kits", api::kit::kit_router()), // URL: /v2/api/kits/...
         )
         .layer(cors)
         .with_state(app_state.clone());

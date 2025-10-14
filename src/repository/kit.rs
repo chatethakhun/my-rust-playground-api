@@ -4,7 +4,7 @@ use sqlx::{Error, SqlitePool};
 // สมมติว่า import model จาก path นี้
 use crate::model::{
     kit::{
-        CreateKitPayload, Kit, KitGrade, KitWithRunners, Status, UpdateKitPayload,
+        CreateKitPayload, Kit, KitGrade, KitStatus, KitWithRunners, UpdateKitPayload,
         UpdateStatusPayload,
     },
     runner::Runner,
@@ -24,7 +24,7 @@ pub async fn create(
         "#,
         payload.name,
         payload.grade,
-        Status::Pending, // 👈 สถานะเริ่มต้น
+        KitStatus::Pending, // 👈 สถานะเริ่มต้น
         user_id,
         now,
         now
@@ -36,28 +36,24 @@ pub async fn create(
     get_by_id(pool, new_kit_id, user_id).await
 }
 
-pub async fn get_all(pool: &SqlitePool, user_id: i64) -> Result<Vec<Kit>, Error> {
-    let kits = sqlx::query_as!(
-        Kit,
-        r#"
-        SELECT
-            id as "id!", -- 👈 เพิ่ม !
-            name,
-            grade as "grade: KitGrade",
-            status as "status: Status",
-            user_id as "user_id!", -- 👈 เพิ่ม !
-            created_at as "created_at!", -- 👈 เพิ่ม !
-            updated_at as "updated_at!"  -- 👈 เพิ่ม !
-        FROM kits
-        WHERE user_id = ?
-        "#,
-        user_id
+pub async fn get_all(
+    pool: &SqlitePool,
+    user_id: i64,
+    kit_status: Option<KitStatus>,
+) -> Result<Vec<Kit>, Error> {
+    let kits = sqlx::query_as::<_, Kit>(
+        r#"SELECT id, name, grade, status, user_id, created_at, updated_at
+          FROM kits
+          WHERE user_id = ? AND (? IS NULL OR status = ?)"#,
     )
+    .bind(user_id)
+    .bind(&kit_status)
+    .bind(&kit_status)
     .fetch_all(pool)
     .await?;
+
     Ok(kits)
 }
-
 // --- READ BY ID (พร้อม Runners) ---
 // ✨ ฟังก์ชันนี้จะเปลี่ยน Return Type เป็น KitWithRunners
 pub async fn get_by_id(
@@ -70,7 +66,7 @@ pub async fn get_by_id(
         Kit,
         r#"
         SELECT
-            id as "id!", name, grade as "grade: KitGrade", status as "status: Status",
+            id as "id!", name, grade as "grade: KitGrade", status as "status: KitStatus",
             user_id as "user_id!", created_at as "created_at!", updated_at as "updated_at!"
         FROM kits WHERE id = ? AND user_id = ?
         "#,
