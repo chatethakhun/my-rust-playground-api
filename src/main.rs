@@ -43,7 +43,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "https://playground-fe-xi.vercel.app".parse().unwrap(),
         ]))
         // 🚨 Set allowed HTTP methods (GET, POST, PUT, DELETE, OPTIONS, etc.)
-        .allow_methods([http::Method::GET, http::Method::POST, http::Method::OPTIONS])
+        .allow_methods([
+            http::Method::GET,
+            http::Method::POST,
+            http::Method::OPTIONS,
+            http::Method::PUT,
+            http::Method::DELETE,
+            http::Method::PATCH,
+        ])
         // 🚨 Set allowed headers (Content-Type, Authorization, etc.)
         .allow_headers(vec![
             header::AUTHORIZATION,
