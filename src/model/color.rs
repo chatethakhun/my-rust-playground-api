@@ -45,3 +45,13 @@ pub struct UpdateColorPayload {
     pub is_multi: Option<bool>,
     // ไม่รวม user_id, created_at
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct RunnerColor {
+    pub id: i64,
+    pub name: String,
+    pub code: String,
+    pub hex: String,
+    pub is_clear: bool,
+    pub is_multi: bool,
+}

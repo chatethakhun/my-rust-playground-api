@@ -1,4 +1,9 @@
-use crate::model::runner::{CreateRunnerPayload, Runner, UpdateIsUsedPayload, UpdateRunnerPayload};
+use crate::model::{
+    color::RunnerColor,
+    runner::{
+        CreateRunnerPayload, Runner, RunnerWithColor, UpdateIsUsedPayload, UpdateRunnerPayload,
+    },
+};
 use chrono::Utc;
 use sqlx::{Error, SqlitePool};
 
@@ -53,6 +58,66 @@ pub async fn get_all_runners(pool: &SqlitePool, user_id: i64) -> Result<Vec<Runn
     )
     .fetch_all(pool)
     .await
+}
+
+// Function สำหรับดึงข้อมูล
+pub async fn get_all_runners_with_color_for_kit(
+    pool: &SqlitePool,
+    kit_id: i64,
+    user_id: i64,
+) -> Result<Vec<RunnerWithColor>, Error> {
+    // Query แบบปกติ แล้วแปลงเป็น nested structure
+    let rows = sqlx::query!(
+        r#"
+        SELECT
+            r.id as runner_id,
+            r.name as runner_name,
+            r.kit_id,
+            r.amount as "amount!: i32",
+            r.user_id,
+            r.is_used,
+            r.created_at,
+            r.updated_at,
+            c.id as color_id,
+            c.code as color_code,
+            c.name as color_name,
+            c.hex as color_hex,
+            c.is_multi as color_is_multi,
+            c.is_clear as color_is_clear
+        FROM runners r
+        INNER JOIN colors c ON r.color_id = c.id
+        WHERE r.user_id = ? AND r.kit_id = ?
+        "#,
+        user_id,
+        kit_id
+    )
+    .fetch_all(pool)
+    .await?;
+
+    // แปลง flat rows เป็น nested structure
+    let runners = rows
+        .into_iter()
+        .map(|row| RunnerWithColor {
+            id: row.runner_id,
+            name: row.runner_name,
+            kit_id: row.kit_id,
+            amount: row.amount,
+            user_id: row.user_id,
+            is_used: row.is_used, // SQLite boolean handling
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+            color: RunnerColor {
+                id: row.color_id,
+                name: row.color_name,
+                code: row.color_code,
+                hex: row.color_hex,
+                is_clear: row.color_is_clear,
+                is_multi: row.color_is_multi,
+            },
+        })
+        .collect();
+
+    Ok(runners)
 }
 
 pub async fn get_runner_by_id(

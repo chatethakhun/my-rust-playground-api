@@ -14,11 +14,12 @@ use crate::{
     model::{
         kit::{KitQuery, KitWithRunners},
         kit_part::KitPart,
-        runner::Runner,
+        runner::{Runner, RunnerWithColor},
         sub_assembly::SubAssembly,
     },
     repository::{
-        kit_part::get_all_kit_parts_for_kit, runner::get_all_runners_for_kit,
+        kit_part::get_all_kit_parts_for_kit,
+        runner::{get_all_runners_for_kit, get_all_runners_with_color_for_kit},
         sub_assembly::get_all_sub_assemblies_for_kit,
     },
     state::AppState,
@@ -118,7 +119,7 @@ pub async fn get_runners_by_kit_id_handler(
     }
 }
 
-pub async fn get_sub_assemblies_by_kit_id_handler(
+async fn get_sub_assemblies_by_it_id_handler(
     State(state): State<AppState>,
     auth_user: AuthUser,
     Path(kit_id): Path<i64>, // 👈 รับ kit_id จาก Path
@@ -141,6 +142,18 @@ pub async fn get_kit_part_by_kit_id_handler(
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }
+#[axum::debug_handler]
+async fn get_all_runners_with_color_handler(
+    State(state): State<AppState>,
+    auth_user: AuthUser,
+    Path(kit_id): Path<i64>, // 👈 รับ kit_id จาก Path
+) -> Result<Json<Vec<RunnerWithColor>>, (StatusCode, String)> {
+    match get_all_runners_with_color_for_kit(&state.db_pool, kit_id, auth_user.user_id).await {
+        Ok(runners) => Ok(Json(runners)),
+        Err(SqlxError::RowNotFound) => Ok(Json(vec![])), // คืนค่า array ว่างถ้าไม่เจอ
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
 
 pub fn kit_router() -> Router<crate::state::AppState> {
     Router::new()
@@ -155,8 +168,12 @@ pub fn kit_router() -> Router<crate::state::AppState> {
         .route("/:id/status", patch(update_kit_status_handler))
         .route("/:id/runners", get(get_runners_by_kit_id_handler))
         .route(
+            "/:id/runner_colors",
+            get(get_all_runners_with_color_handler),
+        )
+        .route(
             "/:id/sub_assemblies",
-            get(get_sub_assemblies_by_kit_id_handler),
+            get(get_sub_assemblies_by_it_id_handler),
         )
         .route("/:id/kit_parts", get(get_kit_part_by_kit_id_handler))
 }
