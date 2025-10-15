@@ -9,6 +9,7 @@
     "username_require": "ชื่อผู้ใช้จำเป็น",
     "password_ph": "รหัสผ่าน",
     "password_require": "รหัสผ่านจำเป็น",
+    "password_min": "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร",
     "submit": "เข้าสู่ระบบ",
     "loading": "กำลังโหลด..."
   }
