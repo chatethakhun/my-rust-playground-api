@@ -13,7 +13,7 @@ use crate::{
     middleware::auth::AuthUser,
     model::{
         kit::{KitQuery, KitWithRunners},
-        kit_part::{KitPart, KitPartWithSubAssembly},
+        kit_part::KitPartWithSubAssembly,
         runner::{Runner, RunnerWithColor},
         sub_assembly::SubAssembly,
     },

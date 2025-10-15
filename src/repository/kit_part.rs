@@ -204,29 +204,38 @@ pub async fn create_kit_part_requirement(
     user_id: i64,
     payload: CreateKitPartRequirementPayload,
 ) -> Result<KitPartRequirement, Error> {
-    sqlx::query_as!(
-        KitPartRequirement,
+    let row = sqlx::query!(
         r#"
         INSERT INTO kit_part_requirements (gate, qty, is_cut, runner_id, kit_part_id, user_id)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        VALUES ($1::JSONB, $2, $3, $4, $5, $6)
         RETURNING
             id as "id!: i64",
-            gate,
+            gate as "gate: sqlx::types::Json<Vec<String>>",
             (qty)::BIGINT as "qty!: i64",
             is_cut,
             runner_id as "runner_id!: i64",
             kit_part_id as "kit_part_id!: i64",
             user_id as "user_id!: i64"
         "#,
-        payload.gate,
-        payload.qty, // INTEGER in DB; struct expects i64 via cast on return
-        false,       // default
+        serde_json::json!(payload.gate),
+        payload.qty,
+        false,
         payload.runner_id,
         payload.kit_part_id,
         user_id
     )
     .fetch_one(pool)
-    .await
+    .await?;
+
+    Ok(KitPartRequirement {
+        id: row.id,
+        gate: row.gate.0,
+        qty: row.qty,
+        is_cut: row.is_cut,
+        runner_id: row.runner_id,
+        kit_part_id: row.kit_part_id,
+        user_id: row.user_id,
+    })
 }
 
 pub async fn get_all_requirements_for_kit_part(
@@ -234,12 +243,11 @@ pub async fn get_all_requirements_for_kit_part(
     kit_part_id: i64,
     user_id: i64,
 ) -> Result<Vec<KitPartRequirement>, Error> {
-    sqlx::query_as!(
-        KitPartRequirement,
+    let rows = sqlx::query!(
         r#"
         SELECT
             id as "id!: i64",
-            gate,
+            gate as "gate: sqlx::types::Json<Vec<String>>",
             (qty)::BIGINT as "qty!: i64",
             is_cut,
             runner_id as "runner_id!: i64",
@@ -252,7 +260,20 @@ pub async fn get_all_requirements_for_kit_part(
         user_id
     )
     .fetch_all(pool)
-    .await
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|row| KitPartRequirement {
+            id: row.id,
+            gate: row.gate.0,
+            qty: row.qty,
+            is_cut: row.is_cut,
+            runner_id: row.runner_id,
+            kit_part_id: row.kit_part_id,
+            user_id: row.user_id,
+        })
+        .collect())
 }
 
 pub async fn delete_kit_part_requirement(

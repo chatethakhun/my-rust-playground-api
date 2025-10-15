@@ -31,7 +31,7 @@ pub struct KitPartWithSubAssembly {
 #[derive(Debug, Serialize, Clone, FromRow)]
 pub struct KitPartRequirement {
     pub id: i64,
-    pub gate: String,
+    pub gate: Vec<String>,
     pub qty: i64,
     pub is_cut: bool,
     pub runner_id: i64,   // Foreign key to runners table
@@ -56,7 +56,7 @@ pub struct UpdateKitPartPayload {
 // --- Payload for KitPartRequirement ---
 #[derive(Debug, Deserialize)]
 pub struct CreateKitPartRequirementPayload {
-    pub gate: String,
+    pub gate: Vec<String>,
     pub qty: i32,
     pub runner_id: i64,
     pub kit_part_id: i64,

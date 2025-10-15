@@ -121,4 +121,9 @@ pub fn kit_part_router() -> Router<AppState> {
             "/:id/requirements",
             get(get_requirements_by_kit_part_handler),
         )
+        .route("/requirements", post(create_kit_part_requirement_handler))
+        .route(
+            "/requirements/:id",
+            delete(delete_kit_part_requirement_handler),
+        )
 }
