@@ -13,7 +13,7 @@ use crate::{
     middleware::auth::AuthUser,
     model::{
         kit::{KitQuery, KitWithRunners},
-        kit_part::KitPart,
+        kit_part::{KitPart, KitPartWithSubAssembly},
         runner::{Runner, RunnerWithColor},
         sub_assembly::SubAssembly,
     },
@@ -135,7 +135,7 @@ pub async fn get_kit_part_by_kit_id_handler(
     State(state): State<AppState>,
     auth_user: AuthUser,
     Path(kit_id): Path<i64>, // 👈 รับ kit_id จาก Path
-) -> Result<Json<Vec<KitPart>>, (StatusCode, String)> {
+) -> Result<Json<Vec<KitPartWithSubAssembly>>, (StatusCode, String)> {
     match get_all_kit_parts_for_kit(&state.db_pool, kit_id, auth_user.user_id).await {
         Ok(kit_parts) => Ok(Json(kit_parts)),
         Err(SqlxError::RowNotFound) => Ok(Json(vec![])), // คืนค่า array ว่างถ้าไม่เจอ

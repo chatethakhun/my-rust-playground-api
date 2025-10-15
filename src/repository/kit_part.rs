@@ -1,6 +1,6 @@
 use crate::model::kit_part::{
     CreateKitPartPayload, CreateKitPartRequirementPayload, KitPart, KitPartRequirement,
-    UpdateKitPartPayload,
+    KitPartWithSubAssembly, UpdateKitPartPayload,
 };
 use sqlx::{Error, PgPool};
 
@@ -67,27 +67,59 @@ pub async fn get_all_kit_parts_for_kit(
     pool: &PgPool,
     kit_id: i64,
     user_id: i64,
-) -> Result<Vec<KitPart>, Error> {
-    sqlx::query_as!(
-        KitPart,
+) -> Result<Vec<KitPartWithSubAssembly>, Error> {
+    let rows = sqlx::query!(
         r#"
         SELECT
-            id as "id!: i64",
-            code,
-            is_cut,
-            kit_id as "kit_id!: i64",
-            sub_assembly_id as "sub_assembly_id!: i64",
-            user_id as "user_id!: i64",
-            (created_at AT TIME ZONE 'UTC') as "created_at!: chrono::NaiveDateTime",
-            (updated_at AT TIME ZONE 'UTC') as "updated_at!: chrono::NaiveDateTime"
-        FROM kit_parts
-        WHERE kit_id = $1 AND user_id = $2
+            kp.id as "kp_id!: i64",
+            kp.code as kp_code,
+            kp.is_cut as kp_is_cut,
+            kp.kit_id as "kp_kit_id!: i64",
+            kp.sub_assembly_id as "kp_sub_assembly_id!: i64",
+            kp.user_id as "kp_user_id!: i64",
+            (kp.created_at AT TIME ZONE 'UTC') as "kp_created_at!: chrono::NaiveDateTime",
+            (kp.updated_at AT TIME ZONE 'UTC') as "kp_updated_at!: chrono::NaiveDateTime",
+            sa.id as "sa_id!: i64",
+            sa.name as sa_name,
+            sa.kit_id as "sa_kit_id!: i64",
+            sa.user_id as "sa_user_id!: i64",
+            (sa.created_at AT TIME ZONE 'UTC') as "sa_created_at!: chrono::NaiveDateTime",
+            (sa.updated_at AT TIME ZONE 'UTC') as "sa_updated_at!: chrono::NaiveDateTime"
+        FROM kit_parts kp
+        JOIN sub_assemblies sa ON sa.id = kp.sub_assembly_id
+        WHERE kp.kit_id = $1 AND kp.user_id = $2
         "#,
         kit_id,
         user_id
     )
     .fetch_all(pool)
-    .await
+    .await?;
+
+    let out = rows
+        .into_iter()
+        .map(|row| KitPartWithSubAssembly {
+            kit_part: KitPart {
+                id: row.kp_id,
+                code: row.kp_code,
+                is_cut: row.kp_is_cut,
+                kit_id: row.kp_kit_id,
+                sub_assembly_id: row.kp_sub_assembly_id,
+                user_id: row.kp_user_id,
+                created_at: row.kp_created_at,
+                updated_at: row.kp_updated_at,
+            },
+            sub_assembly: crate::model::sub_assembly::SubAssembly {
+                id: row.sa_id,
+                name: row.sa_name,
+                kit_id: row.sa_kit_id,
+                user_id: row.sa_user_id,
+                created_at: row.sa_created_at,
+                updated_at: row.sa_updated_at,
+            },
+        })
+        .collect();
+
+    Ok(out)
 }
 
 pub async fn get_kit_part_by_id(pool: &PgPool, id: i64, user_id: i64) -> Result<KitPart, Error> {

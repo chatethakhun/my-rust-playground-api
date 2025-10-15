@@ -1,5 +1,6 @@
 // src/models/kit_part.rs
 
+use crate::model::sub_assembly::SubAssembly;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -15,6 +16,14 @@ pub struct KitPart {
     pub user_id: i64,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+}
+
+// --- KitPart with SubAssembly (joined result) ---
+#[derive(Debug, Serialize, Clone)]
+pub struct KitPartWithSubAssembly {
+    #[serde(flatten)]
+    pub kit_part: KitPart,
+    pub sub_assembly: SubAssembly,
 }
 
 // --- Related Model: KitPartRequirement ---
