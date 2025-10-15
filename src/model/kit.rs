@@ -38,6 +38,7 @@ impl FromStr for KitStatus {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "TEXT")]
+#[sqlx(rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 pub enum KitGrade {
     Eg,
@@ -47,6 +48,23 @@ pub enum KitGrade {
     Mgsd,
     Pg,
     Other,
+}
+
+impl FromStr for KitGrade {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "eg" => Ok(KitGrade::Eg),
+            "hg" => Ok(KitGrade::Hg),
+            "rg" => Ok(KitGrade::Rg),
+            "mg" => Ok(KitGrade::Mg),
+            "mgsd" => Ok(KitGrade::Mgsd),
+            "pg" => Ok(KitGrade::Pg),
+            "other" => Ok(KitGrade::Other),
+            _ => Err(format!("Invalid grade: {}", s)),
+        }
+    }
 }
 
 // --- Main Model: Kit ---
