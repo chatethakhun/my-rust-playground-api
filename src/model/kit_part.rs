@@ -61,3 +61,16 @@ pub struct CreateKitPartRequirementPayload {
     pub runner_id: i64,
     pub kit_part_id: i64,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateKitPartRequirementPayload {
+    pub gate: Option<Vec<String>>,
+    pub qty: Option<i32>,
+    pub is_cut: Option<bool>,
+    pub runner_id: Option<i64>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateRequirementIsCutPayload {
+    pub is_cut: bool,
+}

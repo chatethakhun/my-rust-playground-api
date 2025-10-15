@@ -3,7 +3,7 @@
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
-    routing::{delete, get, post},
+    routing::{delete, get, patch, post},
     Json, Router,
 };
 use serde::Deserialize;
@@ -12,12 +12,14 @@ use sqlx::Error as SqlxError;
 use crate::repository::kit_part::{
     create_kit_part, create_kit_part_requirement, delete_kit_part, delete_kit_part_requirement,
     get_all_kit_parts_for_sub_assembly, get_all_requirements_for_kit_part,
+    update_kit_part_requirement, update_kit_part_requirement_is_cut,
 };
 use crate::state::AppState;
 use crate::{
     middleware::auth::AuthUser,
     model::kit_part::{
         CreateKitPartPayload, CreateKitPartRequirementPayload, KitPart, KitPartRequirement,
+        UpdateKitPartRequirementPayload, UpdateRequirementIsCutPayload,
     },
 };
 
@@ -109,6 +111,38 @@ pub async fn delete_kit_part_requirement_handler(
     }
 }
 
+pub async fn update_kit_part_requirement_handler(
+    State(state): State<AppState>,
+    auth_user: AuthUser,
+    Path(id): Path<i64>,
+    Json(payload): Json<UpdateKitPartRequirementPayload>,
+) -> Result<Json<KitPartRequirement>, (StatusCode, String)> {
+    match update_kit_part_requirement(&state.db_pool, id, auth_user.user_id, payload).await {
+        Ok(req) => Ok(Json(req)),
+        Err(SqlxError::RowNotFound) => {
+            Err((StatusCode::NOT_FOUND, "Requirement not found".to_string()))
+        }
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
+pub async fn update_requirement_is_cut_handler(
+    State(state): State<AppState>,
+    auth_user: AuthUser,
+    Path(id): Path<i64>,
+    Json(payload): Json<UpdateRequirementIsCutPayload>,
+) -> Result<Json<KitPartRequirement>, (StatusCode, String)> {
+    match update_kit_part_requirement_is_cut(&state.db_pool, id, auth_user.user_id, payload.is_cut)
+        .await
+    {
+        Ok(req) => Ok(Json(req)),
+        Err(SqlxError::RowNotFound) => {
+            Err((StatusCode::NOT_FOUND, "Requirement not found".to_string()))
+        }
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
 pub fn kit_part_router() -> Router<AppState> {
     Router::new()
         .route(
@@ -124,6 +158,10 @@ pub fn kit_part_router() -> Router<AppState> {
         .route("/requirements", post(create_kit_part_requirement_handler))
         .route(
             "/requirements/:id",
-            delete(delete_kit_part_requirement_handler),
+            delete(delete_kit_part_requirement_handler).patch(update_kit_part_requirement_handler),
+        )
+        .route(
+            "/requirements/:id/is_cut",
+            patch(update_requirement_is_cut_handler),
         )
 }

@@ -1,6 +1,6 @@
 use crate::model::kit_part::{
     CreateKitPartPayload, CreateKitPartRequirementPayload, KitPart, KitPartRequirement,
-    KitPartWithSubAssembly, UpdateKitPartPayload,
+    KitPartWithSubAssembly, UpdateKitPartPayload, UpdateKitPartRequirementPayload,
 };
 use sqlx::{Error, PgPool};
 
@@ -295,4 +295,90 @@ pub async fn delete_kit_part_requirement(
         return Err(Error::RowNotFound);
     }
     Ok(())
+}
+
+pub async fn update_kit_part_requirement(
+    pool: &PgPool,
+    id: i64,
+    user_id: i64,
+    payload: UpdateKitPartRequirementPayload,
+) -> Result<KitPartRequirement, Error> {
+    // Prepare optional JSON value for gate
+    let gate_json_opt = payload.gate.map(|g| serde_json::json!(g));
+
+    let row = sqlx::query!(
+        r#"
+        UPDATE kit_part_requirements
+        SET
+            gate = COALESCE($1::JSONB, gate),
+            qty = COALESCE($2, qty),
+            is_cut = COALESCE($3, is_cut),
+            runner_id = COALESCE($4, runner_id)
+        WHERE id = $5 AND user_id = $6
+        RETURNING
+            id as "id!: i64",
+            gate as "gate: sqlx::types::Json<Vec<String>>",
+            (qty)::BIGINT as "qty!: i64",
+            is_cut,
+            runner_id as "runner_id!: i64",
+            kit_part_id as "kit_part_id!: i64",
+            user_id as "user_id!: i64"
+        "#,
+        gate_json_opt,
+        payload.qty,
+        payload.is_cut,
+        payload.runner_id,
+        id,
+        user_id
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(KitPartRequirement {
+        id: row.id,
+        gate: row.gate.0,
+        qty: row.qty,
+        is_cut: row.is_cut,
+        runner_id: row.runner_id,
+        kit_part_id: row.kit_part_id,
+        user_id: row.user_id,
+    })
+}
+
+pub async fn update_kit_part_requirement_is_cut(
+    pool: &PgPool,
+    id: i64,
+    user_id: i64,
+    is_cut: bool,
+) -> Result<KitPartRequirement, Error> {
+    let row = sqlx::query!(
+        r#"
+        UPDATE kit_part_requirements
+        SET is_cut = $1
+        WHERE id = $2 AND user_id = $3
+        RETURNING
+            id as "id!: i64",
+            gate as "gate: sqlx::types::Json<Vec<String>>",
+            (qty)::BIGINT as "qty!: i64",
+            is_cut,
+            runner_id as "runner_id!: i64",
+            kit_part_id as "kit_part_id!: i64",
+            user_id as "user_id!: i64"
+        "#,
+        is_cut,
+        id,
+        user_id
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(KitPartRequirement {
+        id: row.id,
+        gate: row.gate.0,
+        qty: row.qty,
+        is_cut: row.is_cut,
+        runner_id: row.runner_id,
+        kit_part_id: row.kit_part_id,
+        user_id: row.user_id,
+    })
 }
