@@ -23,7 +23,7 @@ use tower_http::cors::AllowOrigin; // 👈 For flexible origin control
 use tower_http::cors::CorsLayer; // 👈 Import CorsLayer // 👈 ต้องนำเข้า TcpListener ด้วย // นำเข้า Message สำหรับ Health Check
                                  // Handler สำหรับ Health Check (สามารถย้ายไป api/health.rs ได้)
                                  //
-use sqlx::{migrate, SqlitePool};
+use sqlx::{migrate, PgPool};
 
 async fn mongo_health_check(State(_state): State<AppState>) -> Json<Message> {
     // ... โค้ด Health Check
@@ -67,7 +67,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env file");
 
     // 🚨 สร้าง Pool (ใช้ connect_lazy สำหรับ SQLite ก็ได้ แต่ connect ก็ใช้ได้)
-    let pool = SqlitePool::connect(&database_url).await?;
+    let pool = PgPool::connect(&database_url).await?;
     // 🚀 ส่วนที่แก้ไข: การดึงค่า PORT
     migrate!("./migrations").run(&pool).await?;
     let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set in .env file");

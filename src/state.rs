@@ -1,10 +1,9 @@
 // src/state.rs
 
-// 🚨 ต้องใช้ MySqlPool แทน Client
+use sqlx::PgPool;
 
-use sqlx::SqlitePool;
 #[derive(Clone)]
 pub struct AppState {
-    pub db_pool: SqlitePool, // 🚨 เปลี่ยน Type
+    pub db_pool: PgPool,
     pub jwt_secret: String,
 }

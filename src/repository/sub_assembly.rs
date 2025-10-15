@@ -1,38 +1,50 @@
-// src/repositories/sub_assembly_repository.rs
-
 use crate::model::sub_assembly::{CreateSubAssemblyPayload, SubAssembly, UpdateSubAssemblyPayload};
-use chrono::Utc;
-use sqlx::{Error, SqlitePool};
+use sqlx::{Error, PgPool};
 
 pub async fn create_sub_assembly(
-    pool: &SqlitePool,
+    pool: &PgPool,
     user_id: i64,
     payload: CreateSubAssemblyPayload,
 ) -> Result<SubAssembly, Error> {
-    let now = Utc::now().naive_utc();
-    let new_id = sqlx::query!(
-        "INSERT INTO sub_assemblies (name, kit_id, user_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+    sqlx::query_as!(
+        SubAssembly,
+        r#"
+        INSERT INTO sub_assemblies (name, kit_id, user_id, created_at, updated_at)
+        VALUES ($1, $2, $3, NOW(), NOW())
+        RETURNING
+            id as "id!: i64",
+            name,
+            kit_id as "kit_id!: i64",
+            user_id as "user_id!: i64",
+            (created_at AT TIME ZONE 'UTC') as "created_at!: chrono::NaiveDateTime",
+            (updated_at AT TIME ZONE 'UTC') as "updated_at!: chrono::NaiveDateTime"
+        "#,
         payload.name,
         payload.kit_id,
-        user_id,
-        now,
-        now
+        user_id
     )
-    .execute(pool)
-    .await?
-    .last_insert_rowid();
-
-    get_sub_assembly_by_id(pool, new_id, user_id).await
+    .fetch_one(pool)
+    .await
 }
 
 pub async fn get_all_sub_assemblies_for_kit(
-    pool: &SqlitePool,
+    pool: &PgPool,
     kit_id: i64,
     user_id: i64,
 ) -> Result<Vec<SubAssembly>, Error> {
     sqlx::query_as!(
         SubAssembly,
-        "SELECT * FROM sub_assemblies WHERE kit_id = ? AND user_id = ?",
+        r#"
+        SELECT
+            id as "id!: i64",
+            name,
+            kit_id as "kit_id!: i64",
+            user_id as "user_id!: i64",
+            (created_at AT TIME ZONE 'UTC') as "created_at!: chrono::NaiveDateTime",
+            (updated_at AT TIME ZONE 'UTC') as "updated_at!: chrono::NaiveDateTime"
+        FROM sub_assemblies
+        WHERE kit_id = $1 AND user_id = $2
+        "#,
         kit_id,
         user_id
     )
@@ -41,13 +53,23 @@ pub async fn get_all_sub_assemblies_for_kit(
 }
 
 pub async fn get_sub_assembly_by_id(
-    pool: &SqlitePool,
+    pool: &PgPool,
     id: i64,
     user_id: i64,
 ) -> Result<SubAssembly, Error> {
     sqlx::query_as!(
         SubAssembly,
-        "SELECT * FROM sub_assemblies WHERE id = ? AND user_id = ?",
+        r#"
+        SELECT
+            id as "id!: i64",
+            name,
+            kit_id as "kit_id!: i64",
+            user_id as "user_id!: i64",
+            (created_at AT TIME ZONE 'UTC') as "created_at!: chrono::NaiveDateTime",
+            (updated_at AT TIME ZONE 'UTC') as "updated_at!: chrono::NaiveDateTime"
+        FROM sub_assemblies
+        WHERE id = $1 AND user_id = $2
+        "#,
         id,
         user_id
     )
@@ -56,32 +78,43 @@ pub async fn get_sub_assembly_by_id(
 }
 
 pub async fn update_sub_assembly(
-    pool: &SqlitePool,
+    pool: &PgPool,
     id: i64,
     user_id: i64,
     payload: UpdateSubAssemblyPayload,
 ) -> Result<SubAssembly, Error> {
-    let now = Utc::now().naive_utc();
-    let result = sqlx::query!(
-        "UPDATE sub_assemblies SET name = COALESCE(?, name), kit_id = COALESCE(?, kit_id), updated_at = ? WHERE id = ? AND user_id = ?",
+    sqlx::query_as!(
+        SubAssembly,
+        r#"
+        UPDATE sub_assemblies
+        SET
+            name = COALESCE($1, name),
+            kit_id = COALESCE($2, kit_id),
+            updated_at = NOW()
+        WHERE id = $3 AND user_id = $4
+        RETURNING
+            id as "id!: i64",
+            name,
+            kit_id as "kit_id!: i64",
+            user_id as "user_id!: i64",
+            (created_at AT TIME ZONE 'UTC') as "created_at!: chrono::NaiveDateTime",
+            (updated_at AT TIME ZONE 'UTC') as "updated_at!: chrono::NaiveDateTime"
+        "#,
         payload.name,
         payload.kit_id,
-        now,
         id,
         user_id
     )
-    .execute(pool)
-    .await?;
-
-    if result.rows_affected() == 0 {
-        return Err(Error::RowNotFound);
-    }
-    get_sub_assembly_by_id(pool, id, user_id).await
+    .fetch_one(pool)
+    .await
 }
 
-pub async fn delete_sub_assembly(pool: &SqlitePool, id: i64, user_id: i64) -> Result<(), Error> {
+pub async fn delete_sub_assembly(pool: &PgPool, id: i64, user_id: i64) -> Result<(), Error> {
     let result = sqlx::query!(
-        "DELETE FROM sub_assemblies WHERE id = ? AND user_id = ?",
+        r#"
+        DELETE FROM sub_assemblies
+        WHERE id = $1 AND user_id = $2
+        "#,
         id,
         user_id
     )
