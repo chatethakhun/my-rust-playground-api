@@ -19,6 +19,7 @@
     "title": "Overview",
     "no-runners": "Number of runners"
   },
-  "tab-1": "Not Finished",
-  "tab-2": "Finished"
+  "tab-1": "In Progress",
+  "tab-2": "Pending",
+  "tab-3": "Completed"
 }
