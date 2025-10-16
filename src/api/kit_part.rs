@@ -1,4 +1,5 @@
 // src/handlers/kit_part_handler.rs
+// src/handlers/kit_part.rs
 
 use axum::{
     extract::{Path, Query, State},
@@ -10,7 +11,8 @@ use serde::Deserialize;
 use sqlx::Error as SqlxError;
 
 use crate::repository::kit_part::{
-    bulk_create_requirements, bulk_update_requirements, create_kit_part,
+    bulk_create_requirements, bulk_delete_requirements, bulk_sync_requirements,
+    bulk_update_requirements, compare_sync_requirements, create_kit_part,
     create_kit_part_requirement, delete_kit_part, delete_kit_part_requirement,
     get_all_kit_parts_for_sub_assembly, get_all_requirements_for_kit_part, get_kit_part_by_id,
     get_kit_part_by_id_with_requirements, update_kit_part_is_cut, update_kit_part_requirement,
@@ -20,7 +22,8 @@ use crate::state::AppState;
 use crate::{
     middleware::auth::AuthUser,
     model::kit_part::{
-        BulkCreateRequirementsPayload, BulkUpdateRequirementsPayload, CreateKitPartPayload,
+        BulkCreateRequirementsPayload, BulkDeleteRequirementsPayload, BulkSyncRequirementsPayload,
+        BulkUpdateRequirementsPayload, CompareSyncRequirementsPayload, CreateKitPartPayload,
         CreateKitPartRequirementPayload, KitPart, KitPartRequirement, KitPartWithRequirements,
         UpdateKitPartIsCutPayload, UpdateKitPartRequirementPayload, UpdateRequirementIsCutPayload,
     },
@@ -118,6 +121,47 @@ pub async fn get_kit_part_by_id_with_requirements_handler(
 }
 
 // --- KitPartRequirement Handlers ---
+
+pub async fn bulk_sync_requirements_handler(
+    State(state): State<AppState>,
+    auth_user: AuthUser,
+    Json(payload): Json<BulkSyncRequirementsPayload>,
+) -> Result<Json<Vec<KitPartRequirement>>, (StatusCode, String)> {
+    match bulk_sync_requirements(&state.db_pool, auth_user.user_id, payload).await {
+        Ok(reqs) => Ok(Json(reqs)),
+        Err(SqlxError::RowNotFound) => Err((
+            StatusCode::NOT_FOUND,
+            "Some requirements not found".to_string(),
+        )),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
+pub async fn compare_sync_requirements_handler(
+    State(state): State<AppState>,
+    auth_user: AuthUser,
+    Json(payload): Json<CompareSyncRequirementsPayload>,
+) -> Result<Json<Vec<KitPartRequirement>>, (StatusCode, String)> {
+    match compare_sync_requirements(&state.db_pool, auth_user.user_id, payload).await {
+        Ok(reqs) => Ok(Json(reqs)),
+        Err(SqlxError::RowNotFound) => Err((
+            StatusCode::NOT_FOUND,
+            "Some requirements not found".to_string(),
+        )),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
+pub async fn bulk_delete_requirements_handler(
+    State(state): State<AppState>,
+    auth_user: AuthUser,
+    Json(payload): Json<BulkDeleteRequirementsPayload>,
+) -> Result<Json<u64>, (StatusCode, String)> {
+    match bulk_delete_requirements(&state.db_pool, auth_user.user_id, payload.ids).await {
+        Ok(count) => Ok(Json(count)),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
 
 pub async fn bulk_create_requirements_handler(
     State(state): State<AppState>,
@@ -242,6 +286,15 @@ pub fn kit_part_router() -> Router<AppState> {
         .route(
             "/requirements/bulk",
             post(bulk_create_requirements_handler).patch(bulk_update_requirements_handler),
+        )
+        .route("/requirements/sync", patch(bulk_sync_requirements_handler))
+        .route(
+            "/requirements/compare_sync",
+            patch(compare_sync_requirements_handler),
+        )
+        .route(
+            "/requirements/bulk_delete",
+            post(bulk_delete_requirements_handler),
         )
         .route(
             "/requirements/:id",

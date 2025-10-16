@@ -123,3 +123,31 @@ pub struct UpdateRequirementItem {
     pub is_cut: Option<bool>,
     pub runner_id: Option<i64>,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct BulkSyncRequirementsPayload {
+    pub kit_part_id: i64,
+    pub create: Vec<NewRequirementItem>,
+    pub update: Vec<UpdateRequirementItem>,
+    pub delete_ids: Vec<i64>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CompareSyncRequirementsPayload {
+    pub kit_part_id: i64,
+    pub items: Vec<UpsertRequirementItem>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpsertRequirementItem {
+    pub id: Option<i64>,
+    pub gate: Vec<String>,
+    pub qty: i32,
+    pub is_cut: Option<bool>,
+    pub runner_id: i64,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BulkDeleteRequirementsPayload {
+    pub ids: Vec<i64>,
+}
