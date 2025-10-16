@@ -3,7 +3,7 @@ use crate::model::kit_part::{
     KitPartWithRequirements, KitPartWithSubAssemblyAndRequirements,
     UpdateKitPartRequirementPayload,
 };
-use sqlx::{Error, PgPool};
+use sqlx::{Error, PgPool, Row};
 
 // --- KitPart Functions ---
 
@@ -505,5 +505,124 @@ pub async fn get_all_kit_parts_for_kit_with_requirements(
         })
         .collect();
 
+    Ok(out)
+}
+
+pub async fn bulk_create_requirements(
+    pool: &PgPool,
+    user_id: i64,
+    payload: crate::model::kit_part::BulkCreateRequirementsPayload,
+) -> Result<Vec<KitPartRequirement>, Error> {
+    let mut tx: sqlx::Transaction<'_, sqlx::Postgres> = pool.begin().await?;
+    let mut out = Vec::with_capacity(payload.items.len());
+
+    for item in payload.items {
+        let row = sqlx::query(
+            r#"
+            INSERT INTO kit_part_requirements (gate, qty, is_cut, runner_id, kit_part_id, user_id)
+            VALUES ($1::JSONB, $2, $3, $4, $5, $6)
+            RETURNING
+                id,
+                (gate)::TEXT AS gate_text,
+                (qty)::BIGINT AS qty,
+                is_cut,
+                runner_id,
+                kit_part_id,
+                user_id
+            "#,
+        )
+        .bind(serde_json::json!(item.gate))
+        .bind(item.qty)
+        .bind(item.is_cut.unwrap_or(false))
+        .bind(item.runner_id)
+        .bind(payload.kit_part_id)
+        .bind(user_id)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        let id: i64 = row.try_get("id")?;
+        let gate_text: String = row.try_get("gate_text")?;
+        let qty: i64 = row.try_get("qty")?;
+        let is_cut_val: bool = row.try_get("is_cut")?;
+        let runner_id_val: i64 = row.try_get("runner_id")?;
+        let kit_part_id_val: i64 = row.try_get("kit_part_id")?;
+        let user_id_val: i64 = row.try_get("user_id")?;
+        let gate_vec: Vec<String> = serde_json::from_str(&gate_text).unwrap_or_default();
+
+        out.push(KitPartRequirement {
+            id,
+            gate: gate_vec,
+            qty,
+            is_cut: is_cut_val,
+            runner_id: runner_id_val,
+            kit_part_id: kit_part_id_val,
+            user_id: user_id_val,
+        });
+    }
+
+    tx.commit().await?;
+    Ok(out)
+}
+
+pub async fn bulk_update_requirements(
+    pool: &PgPool,
+    user_id: i64,
+    payload: crate::model::kit_part::BulkUpdateRequirementsPayload,
+) -> Result<Vec<KitPartRequirement>, Error> {
+    let mut tx: sqlx::Transaction<'_, sqlx::Postgres> = pool.begin().await?;
+    let mut out = Vec::with_capacity(payload.items.len());
+
+    for item in payload.items {
+        let gate_json_opt = item.gate.map(|g| serde_json::json!(g));
+
+        let row = sqlx::query(
+            r#"
+            UPDATE kit_part_requirements
+            SET
+                gate = COALESCE($1::JSONB, gate),
+                qty = COALESCE($2, qty),
+                is_cut = COALESCE($3, is_cut),
+                runner_id = COALESCE($4, runner_id)
+            WHERE id = $5 AND user_id = $6
+            RETURNING
+                id,
+                (gate)::TEXT AS gate_text,
+                (qty)::BIGINT AS qty,
+                is_cut,
+                runner_id,
+                kit_part_id,
+                user_id
+            "#,
+        )
+        .bind(gate_json_opt)
+        .bind(item.qty)
+        .bind(item.is_cut)
+        .bind(item.runner_id)
+        .bind(item.id)
+        .bind(user_id)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        let id: i64 = row.try_get("id")?;
+        let gate_text: String = row.try_get("gate_text")?;
+        let qty: i64 = row.try_get("qty")?;
+        let is_cut_val: bool = row.try_get("is_cut")?;
+        let runner_id_val: i64 = row.try_get("runner_id")?;
+        let kit_part_id_val: i64 = row.try_get("kit_part_id")?;
+        let user_id_val: i64 = row.try_get("user_id")?;
+        let gate_vec: Vec<String> = serde_json::from_str(&gate_text).unwrap_or_default();
+
+        out.push(KitPartRequirement {
+            id,
+            gate: gate_vec,
+            qty,
+            is_cut: is_cut_val,
+            runner_id: runner_id_val,
+            kit_part_id: kit_part_id_val,
+            user_id: user_id_val,
+        });
+    }
+
+    tx.commit().await?;
     Ok(out)
 }

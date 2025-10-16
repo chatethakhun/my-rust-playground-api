@@ -95,3 +95,31 @@ pub struct UpdateKitPartRequirementPayload {
 pub struct UpdateRequirementIsCutPayload {
     pub is_cut: bool,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct BulkCreateRequirementsPayload {
+    pub kit_part_id: i64,
+    pub items: Vec<NewRequirementItem>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct NewRequirementItem {
+    pub gate: Vec<String>,
+    pub qty: i32,
+    pub is_cut: Option<bool>,
+    pub runner_id: i64,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BulkUpdateRequirementsPayload {
+    pub items: Vec<UpdateRequirementItem>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateRequirementItem {
+    pub id: i64,
+    pub gate: Option<Vec<String>>,
+    pub qty: Option<i32>,
+    pub is_cut: Option<bool>,
+    pub runner_id: Option<i64>,
+}
