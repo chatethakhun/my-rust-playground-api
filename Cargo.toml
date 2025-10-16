@@ -29,7 +29,7 @@ dotenvy = "0.15"
 
 
 # 🚀 MySQL Driver: SQLx
-sqlx = { version = "0.7", features = ["runtime-tokio", "macros", "postgres", "chrono", "tls-rustls"] }
+sqlx = { version = "0.8", features = ["runtime-tokio", "macros", "postgres", "chrono", "tls-rustls"] }
 
 
 # ... (Tracing/Logging อื่นๆ)
