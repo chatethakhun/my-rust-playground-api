@@ -12,14 +12,16 @@ use sqlx::Error as SqlxError;
 use crate::repository::kit_part::{
     create_kit_part, create_kit_part_requirement, delete_kit_part, delete_kit_part_requirement,
     get_all_kit_parts_for_sub_assembly, get_all_requirements_for_kit_part, get_kit_part_by_id,
-    update_kit_part_is_cut, update_kit_part_requirement, update_kit_part_requirement_is_cut,
+    get_kit_part_by_id_with_requirements, update_kit_part_is_cut, update_kit_part_requirement,
+    update_kit_part_requirement_is_cut,
 };
 use crate::state::AppState;
 use crate::{
     middleware::auth::AuthUser,
     model::kit_part::{
         CreateKitPartPayload, CreateKitPartRequirementPayload, KitPart, KitPartRequirement,
-        UpdateKitPartIsCutPayload, UpdateKitPartRequirementPayload, UpdateRequirementIsCutPayload,
+        KitPartWithRequirements, UpdateKitPartIsCutPayload, UpdateKitPartRequirementPayload,
+        UpdateRequirementIsCutPayload,
     },
 };
 
@@ -92,6 +94,20 @@ pub async fn get_kit_part_by_id_handler(
     Path(id): Path<i64>,
 ) -> Result<Json<KitPart>, (StatusCode, String)> {
     match get_kit_part_by_id(&state.db_pool, id, auth_user.user_id).await {
+        Ok(part) => Ok(Json(part)),
+        Err(SqlxError::RowNotFound) => {
+            Err((StatusCode::NOT_FOUND, "Kit part not found".to_string()))
+        }
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
+pub async fn get_kit_part_by_id_with_requirements_handler(
+    State(state): State<AppState>,
+    auth_user: AuthUser,
+    Path(id): Path<i64>,
+) -> Result<Json<KitPartWithRequirements>, (StatusCode, String)> {
+    match get_kit_part_by_id_with_requirements(&state.db_pool, id, auth_user.user_id).await {
         Ok(part) => Ok(Json(part)),
         Err(SqlxError::RowNotFound) => {
             Err((StatusCode::NOT_FOUND, "Kit part not found".to_string()))
@@ -182,6 +198,10 @@ pub fn kit_part_router() -> Router<AppState> {
             get(get_kit_part_by_id_handler).delete(delete_kit_part_handler),
         )
         .route("/:id/is_cut", patch(update_kit_part_is_cut_handler))
+        .route(
+            "/:id/with_requirements",
+            get(get_kit_part_by_id_with_requirements_handler),
+        )
         // Route สำหรับดึง requirements ทั้งหมดของ part นั้นๆ
         .route(
             "/:id/requirements",

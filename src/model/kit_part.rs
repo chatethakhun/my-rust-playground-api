@@ -28,7 +28,7 @@ pub struct KitPartWithSubAssembly {
 
 // --- Related Model: KitPartRequirement ---
 // ใน SQL, Nested Schema จะกลายเป็นตารางของตัวเองที่เชื่อมโยงกลับมา
-#[derive(Debug, Serialize, Clone, FromRow)]
+#[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
 pub struct KitPartRequirement {
     pub id: i64,
     pub gate: Vec<String>,
@@ -37,6 +37,23 @@ pub struct KitPartRequirement {
     pub runner_id: i64,   // Foreign key to runners table
     pub kit_part_id: i64, // Foreign key to kit_parts table
     pub user_id: i64,     // Foreign key to users table
+}
+
+// --- Response: KitPart with requirements ---
+#[derive(Debug, Serialize, Clone)]
+pub struct KitPartWithRequirements {
+    #[serde(flatten)]
+    pub kit_part: KitPart,
+    pub requirements: Vec<KitPartRequirement>,
+}
+
+// --- Response: KitPart with SubAssembly and requirements ---
+#[derive(Debug, Serialize, Clone)]
+pub struct KitPartWithSubAssemblyAndRequirements {
+    #[serde(flatten)]
+    pub kit_part: KitPart,
+    pub sub_assembly: SubAssembly,
+    pub requirements: Vec<KitPartRequirement>,
 }
 
 // --- Payloads for KitPart ---

@@ -13,12 +13,12 @@ use crate::{
     middleware::auth::AuthUser,
     model::{
         kit::{KitQuery, KitWithRunners},
-        kit_part::KitPartWithSubAssembly,
+        kit_part::KitPartWithSubAssemblyAndRequirements,
         runner::{Runner, RunnerWithColor},
         sub_assembly::SubAssembly,
     },
     repository::{
-        kit_part::get_all_kit_parts_for_kit,
+        kit_part::get_all_kit_parts_for_kit_with_requirements,
         runner::{get_all_runners_for_kit, get_all_runners_with_color_for_kit},
         sub_assembly::get_all_sub_assemblies_for_kit,
     },
@@ -135,8 +135,10 @@ pub async fn get_kit_part_by_kit_id_handler(
     State(state): State<AppState>,
     auth_user: AuthUser,
     Path(kit_id): Path<i64>, // 👈 รับ kit_id จาก Path
-) -> Result<Json<Vec<KitPartWithSubAssembly>>, (StatusCode, String)> {
-    match get_all_kit_parts_for_kit(&state.db_pool, kit_id, auth_user.user_id).await {
+) -> Result<Json<Vec<KitPartWithSubAssemblyAndRequirements>>, (StatusCode, String)> {
+    match get_all_kit_parts_for_kit_with_requirements(&state.db_pool, kit_id, auth_user.user_id)
+        .await
+    {
         Ok(kit_parts) => Ok(Json(kit_parts)),
         Err(SqlxError::RowNotFound) => Ok(Json(vec![])), // คืนค่า array ว่างถ้าไม่เจอ
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
