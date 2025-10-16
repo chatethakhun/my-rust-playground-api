@@ -2,6 +2,7 @@
   "part": {
     "title": "ส่วนประกอบกันพลา",
     "form": {
+      "requirements_label": "ฟอร์มส่วนประกอบกันพลา",
       "subassembly_label": "ส่วนประกอบ",
       "subassembly_ph": "เลือกส่วนประกอบ",
       "subassembly_error": "กรุณาใส่ส่วนประกอบ",
@@ -13,6 +14,7 @@
       "gate_ph": "กด Enter เพื่อเพิ่มเลขเกท",
       "gate_error": "กรุณาเพิ่มเลขเกท กด Enter เพื่อเพิ่มเลขเกท",
       "add_part": "+ แผงรันเนอร์",
+      "remove_part": "ลบแผงรันเนอร์",
       "submit": "Submit",
       "cancel": "Cancel"
     }

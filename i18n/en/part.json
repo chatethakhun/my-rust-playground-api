@@ -2,6 +2,7 @@
   "part": {
     "title": "Kit part",
     "form": {
+      "requirements_label": "Requirements Form",
       "subassembly_label": "Subassembly",
       "subassembly_ph": "Subassembly",
       "subassembly_error": "Please enter the subassembly",
@@ -13,6 +14,7 @@
       "gate_ph": "Press Enter to add the gate",
       "gate_error": "Please add the gate. Press Enter to add the gate",
       "add_part": "+ Add part",
+      "remove_part": "Remove part",
       "submit": "Submit",
       "cancel": "Cancel"
     }
