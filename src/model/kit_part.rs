@@ -19,12 +19,12 @@ pub struct KitPart {
 }
 
 // --- KitPart with SubAssembly (joined result) ---
-#[derive(Debug, Serialize, Clone)]
-pub struct KitPartWithSubAssembly {
-    #[serde(flatten)]
-    pub kit_part: KitPart,
-    pub sub_assembly: SubAssembly,
-}
+// #[derive(Debug, Serialize, Clone)]
+// pub struct KitPartWithSubAssembly {
+//     #[serde(flatten)]
+//     pub kit_part: KitPart,
+//     pub sub_assembly: SubAssembly,
+// }
 
 // --- Related Model: KitPartRequirement ---
 // ใน SQL, Nested Schema จะกลายเป็นตารางของตัวเองที่เชื่อมโยงกลับมา
@@ -64,12 +64,11 @@ pub struct CreateKitPartPayload {
     pub sub_assembly_id: i64,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct UpdateKitPartPayload {
-    pub code: Option<String>,
-    pub is_cut: Option<bool>,
-}
-
+// #[derive(Debug, Deserialize)]
+// pub struct UpdateKitPartPayload {
+//     pub code: Option<String>,
+//     pub is_cut: Option<bool>,
+// }
 #[derive(Debug, Deserialize)]
 pub struct UpdateKitPartIsCutPayload {
     pub is_cut: bool,
