@@ -179,6 +179,36 @@ pub async fn update_kit_part(
     .await
 }
 
+pub async fn update_kit_part_is_cut(
+    pool: &PgPool,
+    id: i64,
+    user_id: i64,
+    is_cut: bool,
+) -> Result<KitPart, Error> {
+    sqlx::query_as!(
+        KitPart,
+        r#"
+        UPDATE kit_parts
+        SET is_cut = $1, updated_at = NOW()
+        WHERE id = $2 AND user_id = $3
+        RETURNING
+            id as "id!: i64",
+            code,
+            is_cut,
+            kit_id as "kit_id!: i64",
+            sub_assembly_id as "sub_assembly_id!: i64",
+            user_id as "user_id!: i64",
+            (created_at AT TIME ZONE 'UTC') as "created_at!: chrono::NaiveDateTime",
+            (updated_at AT TIME ZONE 'UTC') as "updated_at!: chrono::NaiveDateTime"
+        "#,
+        is_cut,
+        id,
+        user_id
+    )
+    .fetch_one(pool)
+    .await
+}
+
 pub async fn delete_kit_part(pool: &PgPool, id: i64, user_id: i64) -> Result<(), Error> {
     let result = sqlx::query!(
         r#"

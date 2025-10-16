@@ -53,6 +53,11 @@ pub struct UpdateKitPartPayload {
     pub is_cut: Option<bool>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct UpdateKitPartIsCutPayload {
+    pub is_cut: bool,
+}
+
 // --- Payload for KitPartRequirement ---
 #[derive(Debug, Deserialize)]
 pub struct CreateKitPartRequirementPayload {
