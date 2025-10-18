@@ -46,7 +46,7 @@ pub struct UpdateColorPayload {
     // ไม่รวม user_id, created_at
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RunnerColor {
     pub id: i64,
     pub name: String,

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::model::{
     kit_part::{KitPart, KitPartRequirement},
-    runner::Runner,
+    runner::{Runner, RunnerWithColor},
 };
 
 #[derive(Debug, Deserialize)]
@@ -94,4 +94,16 @@ pub struct KitPartRequirementWithRunner {
     pub kit_part_id: i64,
     pub user_id: i64,
     pub runner: Runner,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct KitPartRequirementWithRunnerColor {
+    pub id: i64,
+    pub gate: Vec<String>,
+    pub qty: i64,
+    pub is_cut: bool,
+    pub runner_id: i64,
+    pub kit_part_id: i64,
+    pub user_id: i64,
+    pub runner: RunnerWithColor,
 }

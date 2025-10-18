@@ -45,7 +45,7 @@ pub struct UpdateIsUsedPayload {
 }
 
 // Struct สำหรับ Runner ที่มี Color object ซ้อนอยู่ข้างใน
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RunnerWithColor {
     pub id: i64,
     pub name: String,

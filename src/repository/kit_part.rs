@@ -342,6 +342,81 @@ pub async fn get_all_requirements_with_join_runner_for_kit_part(
         .collect())
 }
 
+pub async fn get_all_requirements_with_join_runner_and_color_for_kit_part(
+    pool: &PgPool,
+    kit_part_id: i64,
+    user_id: i64,
+) -> Result<Vec<crate::model::requirement::KitPartRequirementWithRunnerColor>, Error> {
+    let rows = sqlx::query!(
+        r#"
+        SELECT
+            kpr.id as "id!: i64",
+            kpr.gate as "gate: sqlx::types::Json<Vec<String>>",
+            (kpr.qty)::BIGINT as "qty!: i64",
+            kpr.is_cut,
+            kpr.runner_id as "runner_id!: i64",
+            kpr.kit_part_id as "kit_part_id!: i64",
+            kpr.user_id as "user_id!: i64",
+            r.id as "r_id!: i64",
+            (r.name)::TEXT as "r_name!: String",
+            r.kit_id as "r_kit_id!: i64",
+            r.color_id as "r_color_id!: i64",
+            (r.amount)::INT as "r_amount!: i32",
+            r.user_id as "r_user_id!: i64",
+            (r.is_used)::BOOLEAN as "r_is_used!: bool",
+            (r.created_at AT TIME ZONE 'UTC') as "r_created_at!: chrono::NaiveDateTime",
+            (r.updated_at AT TIME ZONE 'UTC') as "r_updated_at!: chrono::NaiveDateTime",
+            c.id as "c_id!: i64",
+            c.name as c_name,
+            c.code as c_code,
+            c.hex as c_hex,
+            c.is_clear as c_is_clear,
+            c.is_multi as c_is_multi
+        FROM kit_part_requirements kpr
+        JOIN runners r ON r.id = kpr.runner_id
+        JOIN colors c ON c.id = r.color_id
+        WHERE kpr.kit_part_id = $1 AND kpr.user_id = $2
+        "#,
+        kit_part_id,
+        user_id
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(
+            |row| crate::model::requirement::KitPartRequirementWithRunnerColor {
+                id: row.id,
+                gate: row.gate.0,
+                qty: row.qty,
+                is_cut: row.is_cut,
+                runner_id: row.runner_id,
+                kit_part_id: row.kit_part_id,
+                user_id: row.user_id,
+                runner: crate::model::runner::RunnerWithColor {
+                    id: row.r_id,
+                    name: row.r_name,
+                    kit_id: row.r_kit_id,
+                    amount: row.r_amount,
+                    user_id: row.r_user_id,
+                    is_used: row.r_is_used,
+                    created_at: row.r_created_at,
+                    updated_at: row.r_updated_at,
+                    color: crate::model::color::RunnerColor {
+                        id: row.c_id,
+                        name: row.c_name,
+                        code: row.c_code,
+                        hex: row.c_hex,
+                        is_clear: row.c_is_clear,
+                        is_multi: row.c_is_multi,
+                    },
+                },
+            },
+        )
+        .collect())
+}
+
 pub async fn get_all_kit_parts_for_kit_with_requirements(
     pool: &PgPool,
     kit_id: i64,

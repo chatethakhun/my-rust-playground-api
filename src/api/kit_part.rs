@@ -19,11 +19,13 @@ use crate::{
     },
 };
 use crate::{
-    model::requirement::KitPartRequirementWithRunner,
+    model::requirement::{KitPartRequirementWithRunner, KitPartRequirementWithRunnerColor},
     repository::kit_part::{
         create_kit_part, delete_kit_part, get_all_kit_parts_for_sub_assembly,
-        get_all_requirements_for_kit_part, get_all_requirements_with_join_runner_for_kit_part,
-        get_kit_part_by_id, get_kit_part_by_id_with_requirements, update_kit_part_is_cut,
+        get_all_requirements_for_kit_part,
+        get_all_requirements_with_join_runner_and_color_for_kit_part,
+        get_all_requirements_with_join_runner_for_kit_part, get_kit_part_by_id,
+        get_kit_part_by_id_with_requirements, update_kit_part_is_cut,
     },
 };
 
@@ -170,4 +172,25 @@ pub fn kit_part_router() -> Router<AppState> {
             "/:id/requirements_with_runners",
             get(get_all_requirements_with_join_runner_handler),
         )
+        .route(
+            "/:id/requirements_with_runners_and_color",
+            get(get_all_requirements_with_join_runner_color_handler),
+        )
+}
+
+pub async fn get_all_requirements_with_join_runner_color_handler(
+    State(state): State<AppState>,
+    auth_user: AuthUser,
+    Path(kit_part_id): Path<i64>,
+) -> Result<Json<Vec<KitPartRequirementWithRunnerColor>>, (StatusCode, String)> {
+    match get_all_requirements_with_join_runner_and_color_for_kit_part(
+        &state.db_pool,
+        kit_part_id,
+        auth_user.user_id,
+    )
+    .await
+    {
+        Ok(reqs) => Ok(Json(reqs)),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
 }
