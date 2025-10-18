@@ -16,10 +16,9 @@ argon2 = "0.5" # สำหรับการ Hash รหัสผ่านอย
 jsonwebtoken = { version = "10", features = ["aws_lc_rs"] }
 # If you do not need pem decoding, you can disable the default feature `use_pem` that way:
 # jsonwebtoken = {version = "10", default-features = false, features = ["aws_lc_rs"] }
-tower-http = { version = "0.5", features = ["cors"] } # 👈 Add this line
+tower-http = { version = "0.6", features = ["cors"] } # 👈 Add this line
 chrono = { version = "0.4", features = ["serde"] } # สำหรับการจัดการเวลาใน JWT Payload
-# 🚀 MongoDB Official Driver
-mongodb = "2.8"
+
 
 # ⚡️ Utility สำหรับ Async/Await
 futures-util = "0.3"
