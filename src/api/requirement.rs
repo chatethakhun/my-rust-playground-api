@@ -136,20 +136,14 @@ pub async fn bulk_sync_requirements_handler(
 
 pub fn requirement_router() -> Router<AppState> {
     Router::new()
-        .route("/requirements", post(create_kit_part_requirement_handler))
+        .route("/", post(create_kit_part_requirement_handler))
         .route(
-            "/requirements/bulk",
+            "/bulk",
             post(bulk_create_requirements_handler).patch(bulk_update_requirements_handler),
         )
-        .route("/requirements/sync", patch(bulk_sync_requirements_handler))
-        .route(
-            "/requirements/compare_sync",
-            patch(compare_sync_requirements_handler),
-        )
-        .route(
-            "/requirements/bulk_delete",
-            post(bulk_delete_requirements_handler),
-        )
+        .route("/sync", patch(bulk_sync_requirements_handler))
+        .route("/compare_sync", patch(compare_sync_requirements_handler))
+        .route("/bulk_delete", post(bulk_delete_requirements_handler))
     // .route(
     //     "/requirements/:id",
     //     delete(delete_kit_part_requirement_handler).patch(update_kit_part_requirement_handler),
