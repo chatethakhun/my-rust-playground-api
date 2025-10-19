@@ -57,6 +57,7 @@ pub async fn get_all_runners(pool: &PgPool, user_id: i64) -> Result<Vec<Runner>,
             (updated_at AT TIME ZONE 'UTC') as "updated_at!: chrono::NaiveDateTime"
         FROM runners
         WHERE user_id = $1
+        ORDER BY name ASC
         "#,
         user_id
     )
