@@ -17,6 +17,10 @@
     "name": "Gunpla Name",
     "grade": "Gunpla grade",
     "title": "Overview",
+    "status": "Status",
+    "status-1": "In Progress",
+    "status-2": "Pending",
+    "status-3": "Completed",
     "no-runners": "Number of runners"
   },
   "tab-1": "In Progress",
