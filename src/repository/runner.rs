@@ -92,6 +92,7 @@ pub async fn get_all_runners_with_color_for_kit(
         FROM runners r
         INNER JOIN colors c ON r.color_id = c.id
         WHERE r.user_id = $1 AND r.kit_id = $2
+        ORDER BY r.is_used DESC, r.name
         "#,
         user_id,
         kit_id
@@ -265,6 +266,7 @@ pub async fn get_all_runners_for_kit(
             (updated_at AT TIME ZONE 'UTC') as "updated_at!: chrono::NaiveDateTime"
         FROM runners
         WHERE kit_id = $1 AND user_id = $2
+        ORDER BY is_used DESC, name
         "#,
         kit_id,
         user_id

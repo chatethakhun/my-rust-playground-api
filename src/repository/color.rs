@@ -17,6 +17,7 @@ pub async fn get_colors(pool: &PgPool, user_id: i64) -> Result<Vec<Color>, Error
             (updated_at AT TIME ZONE 'UTC') as "updated_at?: chrono::NaiveDateTime"
         FROM colors
         WHERE user_id = $1
+        ORDER BY is_multi DESC, is_clear DESC, name
         "#,
         user_id
     )
