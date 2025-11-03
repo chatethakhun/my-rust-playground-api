@@ -7,5 +7,6 @@ pub mod kit_part;
 pub mod paint;
 pub mod requirement;
 pub mod runner;
+pub mod steam;
 pub mod sub_assembly;
 pub mod user;

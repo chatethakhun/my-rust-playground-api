@@ -11,7 +11,9 @@ use crate::api::i18n::serve_i18n_file;
 
 use crate::api::kit_part::kit_part_router;
 use crate::api::requirement::requirement_router;
+use crate::api::steam::steam_router;
 use crate::model::common::Message;
+
 use crate::state::AppState;
 use axum::extract::State;
 use axum::http::{self, header};
@@ -96,8 +98,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .nest("/runners", api::runner::runner_router())
                 .nest("/sub_assemblies", api::sub_assembly::sub_assembly_router())
                 .nest("/kit_parts", kit_part_router())
-                .nest("/requirements", requirement_router()), // URL: /v2/api/auth/...
-                                                              // .nest("/kits", api::kit::kit_router()), // URL: /v2/api/kits/...
+                .nest("/requirements", requirement_router())
+                .nest("/steam", steam_router()),
+            // URL: /v2/api/auth/...
+            // .nest("/kits", api::kit::kit_router()), // URL: /v2/api/kits/...
         )
         .layer(cors)
         .with_state(app_state.clone());

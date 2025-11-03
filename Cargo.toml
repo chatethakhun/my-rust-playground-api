@@ -11,6 +11,7 @@ axum = { version = "0.7", features = ["macros"] }
 tokio = { version = "1.37", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+
 argon2 = "0.5" # สำหรับการ Hash รหัสผ่านอย่างปลอดภัย
 # You will have to select either `aws_lc_rs` or `rust_crypto` as backend if you're not using your own
 jsonwebtoken = { version = "10", features = ["aws_lc_rs"] }
@@ -29,6 +30,8 @@ dotenvy = "0.15"
 
 # 🚀 MySQL Driver: SQLx
 sqlx = { version = "0.8", features = ["runtime-tokio", "macros", "postgres", "chrono", "tls-rustls"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
+
 
 
 # ... (Tracing/Logging อื่นๆ)
