@@ -1,0 +1,11 @@
+{
+  "steam": {
+    "openInSteamDB": "เปิดใน SteamDB",
+    "form": {
+      "name": "ชื่อ",
+      "appId": "แอปที่ใช้ ID",
+      "steamDbUrl": "SteamDB URL",
+      "submit": "ส่ง"
+    }
+  }
+}
